@@ -47,8 +47,15 @@ alias stack dr15
 bdns print PowerInc
 bdns stack PowerInc
 
+# Turn on stacker if printer is on
 l setting print On
 s stack On setting
+
+# If we're ejecting ingots, set stacker to 500
+l r0 print Open
+l r1 stack Setting
+select r2 r0 500 r1
+s stack Setting r2
 
 # Increment device counter
 PowerInc:
