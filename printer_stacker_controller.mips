@@ -6,19 +6,27 @@ alias Print2 d4
 alias Stack2 d5
 
 alias counter r15
-
-alias LastHash0 r10
-alias LastHash1 r11
-alias LastHash2 r12
+alias lasthash r0
+alias currenthash r1
+alias setting r2
 
 define MAXDEVICES 5
 
 init:
-brdns Print0 2
+brdns Print0 5
+l lasthash Print0 RecipeHash
+push lasthash
 s Print0 ClearMemory 1
-brdns Print1 2
+
+brdns Print1 5
+l lasthash Print1 RecipeHash
+push lasthash
 s Print1 ClearMemory 1
-brdns Print2 2
+
+
+brdns Print2 5
+l lasthash Print2 RecipeHash
+push lasthash
 s Print2 ClearMemory 1
 
 start:
@@ -33,8 +41,8 @@ alias stack dr15
 bdns print PowerInc
 bdns stack PowerInc
 
-l r0 print On
-s stack On r0
+l setting print On
+s stack On setting
 
 # Increment device counter
 PowerInc:
@@ -54,6 +62,13 @@ alias stack dr15
 bdns print checkCountInc
 bdns stack checkCountInc
 
+l currenthash print RecipeHash
+peek lasthash
+push currenthash
+sne setting lasthash currenthash
+s print ClearMemory setting
+s stack Activate setting
+
 l r0 stack Setting
 l r1 print ExportCount
 
@@ -66,7 +81,9 @@ s print ClearMemory 1
 # Increment device counter
 checkCountInc:
 add counter counter 1
+add sp sp 1
 ble counter MAXDEVICES checkCount
 
+move sp 1
 yield
 j start
