@@ -5,6 +5,14 @@ alias Stack1 d3
 alias Print2 d4
 alias Stack2 d5
 
+alias counter r15
+
+alias LastHash0 r10
+alias LastHash1 r11
+alias LastHash2 r12
+
+define MAXDEVICES 5
+
 init:
 brdns Print0 2
 s Print0 ClearMemory 1
@@ -14,49 +22,51 @@ brdns Print2 2
 s Print2 ClearMemory 1
 
 start:
-process0:
-bdns Print0 process1
-bdns Stack0 process1
-s db Setting 1
-l r0 Print0 On
-s Stack0 On r0
+move counter 0
+# Loop through all pairs of printers and stackers
+power:
+alias print dr15
+add counter counter 1 # stacker is always one above printer
+alias stack dr15
+
+# Continue if device does not exist
+bdns print PowerInc
+bdns stack PowerInc
+
+l r0 print On
+s stack On r0
+
+# Increment device counter
+PowerInc:
+add counter counter 1
+ble counter MAXDEVICES power
+
 yield
-move r15 0
-beqal r0 1 checkCount
 
-process1:
-bdns Print1 process2
-bdns Stack1 process2
-s db Setting 2
-l r0 Print1 On
-s Stack1 On r0
-yield
-move r15 2
-beqal r0 1 checkCount
-
-process2:
-bdns Print2 start
-bdns Stack2 start
-s db Setting 3
-l r0 Print2 On
-s Stack2 On r0
-yield
-move r15 4
-beqal r0 1 checkCount
-
-j start
-
-### Helper functions
-# Expects 'pairIdx' as an arg in r15 which points to
-# the starting device
+move counter 0
+# Loop through all pairs of printers and stackers
 checkCount:
 alias print dr15
-add r15 r15 1 # stacker is always one above printer
+add counter counter 1 # stacker is always one above printer
 alias stack dr15
+
+# Continue if device does not exist
+bdns print checkCountInc
+bdns stack checkCountInc
+
 l r0 stack Setting
 l r1 print ExportCount
-blt r1 r0 ra # If still more to print, return
+
+blt r1 r0 checkCountInc # If still more to print, continue
+
 # Export count has been reached, stop the printer
 s print Activate 0
 s print ClearMemory 1
-j ra
+
+# Increment device counter
+checkCountInc:
+add counter counter 1
+ble counter MAXDEVICES checkCount
+
+yield
+j start
