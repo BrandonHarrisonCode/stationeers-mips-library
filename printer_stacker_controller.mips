@@ -41,8 +41,13 @@ alias stack dr15
 bdns print PowerInc
 bdns stack PowerInc
 
+# Make stacker turn on when printer does
 l setting print On
 s stack On setting
+
+# Clear memory if stacker is empty
+l setting stack Activate
+s print clearMemory setting
 
 # Increment device counter
 PowerInc:
