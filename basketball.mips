@@ -1,0 +1,18 @@
+alias Basket d0
+alias FlashingLight d1
+alias Speaker d2
+
+alias counter r15
+alias setting r2
+
+define MAXDEVICES 5
+
+init:
+s Basket On 1
+s FlashingLight On 0
+s Speaker On 0
+
+start:
+
+yield
+j start
