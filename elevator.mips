@@ -1,0 +1,53 @@
+alias Elevator d0
+alias APC0 d1
+alias APC1 d2
+alias APC2 d3
+alias APC3 d4
+alias APC4 d5
+
+# The "Elevator Level" that the APC controls
+# -1 for no level
+define APC0LVL -1
+define APC1LVL -1
+define APC2LVL -1
+define APC3LVL -1
+define APC4LVL -1
+
+define MAXAPCS 5
+
+alias eLvl r5
+alias apcLvl r6
+alias power r7
+
+init:
+push APC0LVL
+push APC1LVL
+push APC2LVL
+push APC3LVL
+push APC4LVL
+
+start:
+# the general idea is that we'll load the position of the elevator, and then loop through all of the levels turning them all off except for the level that the eleveator is at
+l eLvl Elevator ElevatorLevel
+
+# My elevator has levels 0, 2, and 3
+move r0 1
+move sp r0
+loop:
+# Branch if device not set
+bdns dr0 inc
+# Check if device is deactivated in config
+peek apcLvl
+beq apcLvl -1 inc
+
+seq power eLvl apcLvl
+s dr0 On power
+
+inc:
+add r0 r0 1
+move sp r0
+blt r0 MAXAPCS loop
+
+move sp 1
+yield
+j start
