@@ -11,6 +11,8 @@ alias currenthash r1
 alias setting r2
 
 define MAXDEVICES 5
+define INGOTSIZE 500
+define INTERNALSLOT 1
 
 init:
 brdns Print0 5
@@ -51,10 +53,24 @@ bdns stack PowerInc
 l setting print On
 s stack On setting
 
-# If we're ejecting ingots, set stacker to 500
 l r0 print Open
 l r1 stack Setting
-select r2 r0 500 r1
+
+# If printer is open (ejecting ingots), set stacker to 500
+select r2 r0 INGOTSIZE r1
+s stack Setting r2
+
+# Constantly clear stacker if ejecting
+seq r3 r2 INGOTSIZE
+ls r4 stack INTERNALSLOT Occupied # Only if something is in the stacker
+and r3 r3 r4
+s stack Activate r3
+
+# If printer is closed but stacker is set to 500, set it to 1
+seq r3 r1 INGOTSIZE
+seqz r4 r0
+and r3 r3 r4 # 1 if stacker should be reset, 0 if nothing should happen
+select r2 r3 1 r2
 s stack Setting r2
 
 # Increment device counter
