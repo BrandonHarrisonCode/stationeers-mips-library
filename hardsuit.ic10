@@ -4,9 +4,6 @@ alias JetPack d1
 define DesiredPressure 100 # kPa
 define DesiredTemperature 293.15 # 20C
 
-define PollutantThreshold 0.01
-define NitrousOxideThreshold 0.01
-
 define PressureDeviance 0.2 # 10%, 80kPa to 120kPa
 define TemperatureDeviance 0.04 # 4%, 8C to 32C
 
@@ -22,6 +19,8 @@ start:
 yield
 jal autoOpenHelmet
 jal helmetStatus
+l r0 db Setting
+s db SoundAlert r0
 j start
 
 autoOpenHelmet:
