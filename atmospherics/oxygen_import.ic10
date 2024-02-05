@@ -1,0 +1,25 @@
+alias PATOxygen d0
+alias PATOutput d1
+alias VolumePump d2
+
+define MinOxygenPressure 1000
+define MaxOutputPressure 10000
+
+alias OxygenPressure r15
+alias OutputPressure r14
+
+init:
+s VolumePump On 0
+s VolumePump Setting 10
+s VolumePump Lock 1
+
+start:
+yield
+l OxygenPressure PATOxygen Pressure
+l OutputPressure PATOutput Pressure
+
+slt r0 OxygenPressure MinOxygenPressure
+slt r1 OutputPressure MaxOutputPressure
+and r0 r0 r1
+s VolumePump On r0
+j start
