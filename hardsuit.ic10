@@ -1,18 +1,40 @@
 alias Helmet d0
 alias JetPack d1
 
-define DefaultPressure 100 # kPa
-define DefaultTemperature 293.15 # 20C
+define DesiredPressure 100 # kPa
+define DesiredTemperature 293.15 # 20C
+
+define PollutantThreshold 0.01
+define NitrousOxideThreshold 0.01
+
+define PressureDeviance 0.2 # 10%, 80kPa to 120kPa
+define TemperatureDeviance 0.04 # 4%, 8C to 32C
 
 alias HelmetOpen r15
+alias HelmetLock r14
+alias ExternalPressure r13
+alias ExternalTemperature r12
 init:
-s db PressureSetting DefaultPressure
-s db TemperatureSetting DefaultTemperature
+s db PressureSetting DesiredPressure
+s db TemperatureSetting DesiredTemperature
 
 start:
 yield
+jal autoOpenHelmet
 jal helmetStatus
 j start
+
+autoOpenHelmet:
+l ExternalPressure db PressureExternal
+l ExternalTemperature db TemperatureExternal
+l HelmetLock Helmet Lock
+seqz HelmetLock HelmetLock
+sap r0 DesiredPressure ExternalPressure PressureDeviance
+sap r1 DesiredTemperature ExternalTemperature TemperatureDeviance
+and r0 r0 r1
+and r0 r0 HelmetLock
+s Helmet Open r0
+j ra
 
 helmetStatus:
 l HelmetOpen Helmet Open
