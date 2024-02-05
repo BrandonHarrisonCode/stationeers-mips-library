@@ -1,0 +1,22 @@
+define DesiredGasPressure 1000 # kPa
+
+alias PATGas d0
+alias PATLiquid d1
+alias PurgeValve d2
+
+alias GasPressure r14
+alias LiquidPressure r15
+
+init:
+s PurgeValve Lock 1
+s PurgeValve On 0
+s PurgeValve Setting 0
+
+# Idea, code the phase change chart so that it can figure out the temperature dynamically
+start:
+yield
+l GasPressure PATGas Pressure
+l LiquidPressure PATLiquid Pressure
+slt r0 GasPressure DesiredGasPressure
+s PurgeValve On r0
+j start

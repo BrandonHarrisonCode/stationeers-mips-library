@@ -1,0 +1,19 @@
+define MaxPressure 500 # kPa
+
+alias ActiveVent d0
+alias PipeAnalyzer d1
+
+define Inwards 1
+
+init:
+s ActiveVent Mode Inwards 
+s ActiveVent Lock 1
+s PipeAnalyzer On 1
+s PipeAnalyzer Lock 1
+
+start:
+yield
+l r0 PipeAnalyzer Pressure
+slt r1 r0 MaxPressure
+s ActiveVent On r1
+j start

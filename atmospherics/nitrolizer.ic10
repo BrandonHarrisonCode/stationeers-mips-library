@@ -1,0 +1,32 @@
+# Only turn on if battery is above a certain threshold
+# Only turn on if there's enough gas in both input pipes
+# Turn off if there is too much gas in the output pipe (or any liquid)
+
+define BatteryMin 0.75
+define MaxOutputPressure 1000
+define MinInputPressure 500
+
+alias BatteryReader d0 # A Logic I/O reader that averages batteries
+
+alias BatteryLevel r15
+alias OutputPressure r14
+alias InputPressure1 r13
+alias InputPressure2 r12
+alias LowestPressure r11
+
+init:
+start:
+yield
+l BatteryLevel BatteryReader Setting
+l OutputPressure db PressureOutput
+l InputPressure1 db PressureInput
+l InputPressure2 db PressureInput2
+min LowestPressure InputPressure1 InputPressure2
+
+sgt r0 LowestPressure MinInputPressure
+slt r1 OutputPressure MaxOutputPressure
+sgt r2 BatteryLevel BatteryMin
+mul r0 r0 r1
+mul r0 r0 r2
+s db Mode r0
+j start

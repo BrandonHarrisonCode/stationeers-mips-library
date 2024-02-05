@@ -1,0 +1,26 @@
+define PressureTarget 100 # kPa
+define MaxTemp 293.15 # K
+
+alias GasSensor d0
+alias PurgeValve d1
+
+alias RoomPressure r14
+alias RoomTemperature r15
+
+define ActiveVents HASH("StructureActiveVent")
+
+init:
+s PurgeValve Lock 1
+s PurgeValve On 0
+s PurgeValve Setting 0
+sb ActiveVents On 0
+
+start:
+yield
+l RoomPressure GasSensor Pressure
+l RoomTemperature GasSensor Temperature
+sgt r0 RoomPressure PressureTarget
+sgt r1 RoomTemperature MaxTemp
+sb ActiveVents On r0
+s PurgeValve On r1
+j start

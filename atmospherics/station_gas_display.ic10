@@ -1,0 +1,21 @@
+alias GasSensor d0
+alias NitrogenDisplay d1
+alias CarbonDioxideDisplay d2
+alias OxygenDisplay d3
+alias DangerLight d4
+alias DangerKlaxon d5
+
+init:
+s NitrogenDisplay Mode 1 # Percentile display
+s CarbonDioxideDisplay Mode 1 # Percentile display
+s OxygenDisplay Mode 1 # Percentile display
+
+start:
+yield
+l r0 GasSensor RatioNitrogen
+l r1 GasSensor RatioCarbonDioxide
+l r2 GasSensor RatioOxygen
+s NitrogenDisplay Setting r0
+s CarbonDioxideDisplay Setting r1
+s OxygenDisplay Setting r2
+j start

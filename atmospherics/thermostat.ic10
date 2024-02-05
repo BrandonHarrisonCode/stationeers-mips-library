@@ -1,0 +1,19 @@
+alias GasSensor d0
+alias DigitalValve d1
+alias InteriorPA d2
+
+define MinTemp 291.15
+define MaxTemp 295.15
+
+define WallHeaters HASH("StructureWallHeater")
+
+start:
+yield
+l r0 GasSensor Temperature
+slt r1 r0 MinTemp
+sb WallHeaters On r1
+
+l r0 InteriorPA Temperature
+sgt r1 r0 MaxTemp
+s DigitalValve On r1
+j start

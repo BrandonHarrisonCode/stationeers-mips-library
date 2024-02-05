@@ -1,0 +1,68 @@
+alias WarningLight d0
+alias IC10 d1
+
+alias InputRatio r15
+alias WarningLightFlashing r14
+alias ResetNeeded r13
+
+define ColorCarbonDioxide 1 # Grey
+define ColorNitrogen 7 # Black
+define ColorNitrousOxide 2 # Green
+define ColorOxygen 6 # White
+define ColorPollutants 5 # Yellow
+define ColorVolatiles 4 # Red
+define ColorWater 0 # Blue
+
+init:
+s db On 1
+s WarningLight On 0
+
+start:
+yield
+l InputRatio db RatioCarbonDioxideInput
+# l InputRatio db RatioNitrogenInput
+# l InputRatio db RatioNitrousOxideInput
+# l InputRatio db RatioOxygenInput
+# l InputRatio db RatioPollutantInput
+# l InputRatio db RatioVolatilesInput
+# l InputRatio db RatioWaterInput
+ceil InputRatio InputRatio
+s db Mode InputRatio
+
+filterCheck:
+ls r0 db 0 Quantity
+ls r1 db 1 Quantity
+min r0 r0 r1
+move r1 WarningLightFlashing
+seqz WarningLightFlashing r0
+xor r2 WarningLightFlashing r1
+move ResetNeeded r2
+
+# Flash warning Light
+l r0 WarningLight On
+seqz r0 r0
+and r0 r0 WarningLightFlashing
+beqz WarningLightFlashing filterscreen
+s WarningLight Color ColorCarbonDioxide # Grey
+# s WarningLight Color ColorNitrogen # Black
+# s WarningLight Color ColorNitrousOxide # Green
+# s WarningLight Color ColorOxygen # White
+# s WarningLight Color ColorPollutants # Yellow
+# s WarningLight Color ColorVolatiles # Red
+# s WarningLight Color ColorWater # Blue
+s WarningLight On r0
+
+filterscreen:
+ls r0 db 0 PrefabHash
+ls r1 db 1 PrefabHash
+select r0 r0 r0 r1
+l r1 IC10 Setting
+beqz WarningLightFlashing checkreset
+s IC10 Setting r0 
+j start
+
+checkreset:
+select r0 ResetNeeded -1 r1
+move ResetNeeded 0
+s IC10 Setting r0
+j start
