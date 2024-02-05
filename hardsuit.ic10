@@ -1,0 +1,23 @@
+alias Helmet d0
+alias JetPack d1
+
+define DefaultPressure 100 # kPa
+define DefaultTemperature 293.15 # 20C
+
+alias HelmetOpen r15
+init:
+s db PressureSetting DefaultPressure
+s db TemperatureSetting DefaultTemperature
+
+start:
+yield
+jal helmetStatus
+j start
+
+helmetStatus:
+l HelmetOpen Helmet Open
+seqz r0 HelmetOpen
+s db On r0
+s db AirRelease r0 
+s db Filtration r0
+j ra
