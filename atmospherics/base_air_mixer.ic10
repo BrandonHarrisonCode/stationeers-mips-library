@@ -1,0 +1,23 @@
+alias GasMixerAB d0
+alias GasSensorAB d1
+alias GasMixerABC d2
+alias GasSensorABC d3
+
+define TargetPressure 5000
+
+Setup:
+s GasMixerAB Lock 1
+s GasMixerABC Lock 1
+s GasSensorAB On 1
+s GasSensorABC On 1
+
+Start:
+yield
+l r0 GasSensorAB Pressure
+slt r1 r0 TargetPressure
+s GasMixerAB On r1
+
+l r0 GasSensorABC Pressure
+slt r1 r0 TargetPressure
+s GasMixerABC On r1
+j Start

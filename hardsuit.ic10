@@ -16,29 +16,27 @@ s db PressureSetting DesiredPressure
 s db TemperatureSetting DesiredTemperature
 
 start:
-yield
-jal autoOpenHelmet
-jal helmetStatus
-l r0 db Setting
-s db SoundAlert r0
+	yield
+	jal autoOpenHelmet
+	jal helmetStatus
 j start
 
 autoOpenHelmet:
-l ExternalPressure db PressureExternal
-l ExternalTemperature db TemperatureExternal
-l HelmetLock Helmet Lock
-seqz HelmetLock HelmetLock
-sap r0 DesiredPressure ExternalPressure PressureDeviance
-sap r1 DesiredTemperature ExternalTemperature TemperatureDeviance
-and r0 r0 r1
-and r0 r0 HelmetLock
-s Helmet Open r0
+	l ExternalPressure db PressureExternal
+	l ExternalTemperature db TemperatureExternal
+	l HelmetLock Helmet Lock
+	seqz HelmetLock HelmetLock
+	sap r0 DesiredPressure ExternalPressure PressureDeviance
+	sap r1 DesiredTemperature ExternalTemperature TemperatureDeviance
+	and r0 r0 r1
+	and r0 r0 HelmetLock
+	s Helmet Open r0
 j ra
 
 helmetStatus:
-l HelmetOpen Helmet Open
-seqz r0 HelmetOpen
-s db On r0
+	l HelmetOpen Helmet Open
+	seqz r0 HelmetOpen
+	s db On r0
 s db AirRelease r0 
-s db Filtration r0
+	s db Filtration r0
 j ra

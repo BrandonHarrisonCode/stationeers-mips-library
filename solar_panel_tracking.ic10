@@ -1,0 +1,54 @@
+define SolarPanels HASH("StructureSolarPanel")
+define SolarPanelsDual HASH("StructureSolarPanelDual")
+# Horizontal Vertical
+alias DaylightSensor d0
+
+alias SensorDirection r15
+alias SolarPanelsDirection r14
+alias VerticalAdjustmentTerm r13
+alias HorizontalAdjustmentTerm r12
+alias SensorHorizontal r11
+alias SensorVertical r10
+alias SPHorizontal r9
+alias SPVertical r8
+
+init:
+define NORTH 0
+define WEST 270
+define SOUTH 180
+define EAST 90
+
+### USER CONFIGURATION ###
+# The direction the sensor's data port is facing
+move SensorDirection WEST
+# The direction the solar panels' data ports are facing
+move SolarPanelsDirection WEST
+### END USER CONFIGURATION ###
+
+# sub r0 SensorDirection SolarPanelsDirection
+# sub r0 r0 90 # Solar panel / daylight sensor offset
+# mod r0 r0 360
+move VerticalAdjustmentTerm 90
+
+sub r0 SensorDirection SolarPanelsDirection
+add r0 r0 90 # Solar panel / daylight sensor offset
+mod r0 r0 360
+move HorizontalAdjustmentTerm r0
+
+start:
+	yield
+	l SensorHorizontal DaylightSensor Horizontal
+	l SensorVertical DaylightSensor Vertical
+	
+    add SPVertical VerticalAdjustmentTerm SensorVertical 
+	mod SPVertical SPVertical 360
+
+	sub SPHorizontal SensorHorizontal HorizontalAdjustmentTerm
+	mod SPHorizontal SPHorizontal 360
+	
+	sb SolarPanels Horizontal SPHorizontal
+	sb SolarPanelsDual Horizontal SPHorizontal
+	
+	sb SolarPanels Vertical SPVertical
+	sb SolarPanelsDual Vertical SPVertical
+j start
