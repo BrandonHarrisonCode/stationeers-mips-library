@@ -10,6 +10,7 @@ define MaxStage2Pressure 2000 # kPa
 define Stage1TempThreshold 425 # K
 define Stage1MaxLiters 10 # L
 define Stage1MinLiters 1 # L
+define MaxStage1Pressure 1000 # kPa
 ##### End User Config #####
 
 define WaterMolsPerLiter 55.6 # mols
@@ -57,12 +58,12 @@ calcMoles:
 j ra
 
 drainWater:
-yield
-s db Mode 0
-l Stage1Temp Stage1 Temperature
-slt Stage1Temp Stage1Temp Stage1TempThreshold
-s Stage1Pump On Stage1Temp
-
-jal calcMoles
-blt Stage1WaterLiters Stage1MinLiters start
-3 drainWater
+	yield
+	s db Mode 0
+	l Stage1Temp Stage1 Temperature
+	slt Stage1Temp Stage1Temp Stage1TempThreshold
+	s Stage1Pump On Stage1Temp
+	
+	jal calcMoles
+	blt Stage1WaterLiters Stage1MinLiters start
+j drainWater
