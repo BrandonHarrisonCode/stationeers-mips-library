@@ -12,7 +12,7 @@ alias setting r2
 
 define MAXDEVICES 5
 define INGOTSIZE 500
-define INTERNALSLOT 1
+define INTERNALSLOT 2
 
 init:
 brdns Print0 5
@@ -36,82 +36,82 @@ push 0
 blt sp 3 loop
 
 start:
-move counter 0
-move sp 1
-
-# Loop through all pairs of printers and stackers
-power:
-alias print dr15
-add counter counter 1 # stacker is always one above printer
-alias stack dr15
-
-# Continue if device does not exist
-bdns print PowerInc
-bdns stack PowerInc
-
-# Turn on stacker if printer is on
-l setting print On
-s stack On setting
-
-l r0 print Open
-l r1 stack Setting
-
-# If printer is open (ejecting ingots), set stacker to 500
-select r2 r0 INGOTSIZE r1
-s stack Setting r2
-
-# Constantly clear stacker if ejecting
-seq r3 r2 INGOTSIZE
-ls r4 stack INTERNALSLOT Occupied # Only if something is in the stacker
-and r3 r3 r4
-s stack Activate r3
-
-# If printer is closed but stacker is set to 500, set it to 1
-seq r3 r1 INGOTSIZE
-seqz r4 r0
-and r3 r3 r4 # 1 if stacker should be reset, 0 if nothing should happen
-select r2 r3 1 r2
-s stack Setting r2
-
-# Increment device counter
-PowerInc:
-add counter counter 1
-ble counter MAXDEVICES power
-
-yield
-
-move counter 0
-# Loop through all pairs of printers and stackers
-checkCount:
-alias print dr15
-add counter counter 1 # stacker is always one above printer
-alias stack dr15
-
-# Continue if device does not exist
-bdns print checkCountInc
-bdns stack checkCountInc
-
-l currenthash print RecipeHash
-pop lasthash
-push currenthash
-sne setting lasthash currenthash
-s print ClearMemory setting
-s stack Activate setting
-
-l r0 stack Setting
-l r1 print ExportCount
-
-blt r1 r0 checkCountInc # If still more to print, continue
-
-# Export count has been reached, stop the printer
-s print Activate 0
-s print ClearMemory 1
-
-# Increment device counter
-checkCountInc:
-add counter counter 1
-add sp sp 1
-ble counter MAXDEVICES checkCount
-
-yield
+	move counter 0
+	move sp 1
+	
+	# Loop through all pairs of printers and stackers
+	power:
+	alias print dr15
+	add counter counter 1 # stacker is always one above printer
+	alias stack dr15
+	
+	# Continue if device does not exist
+	bdns print PowerInc
+	bdns stack PowerInc
+	
+	# Turn on stacker if printer is on
+	l setting print On
+	s stack On setting
+	
+	l r0 print Open
+	l r1 stack Setting
+	
+	# If printer is open (ejecting ingots), set stacker to 500
+	select r2 r0 INGOTSIZE r1
+	s stack Setting r2
+	
+	# Constantly clear stacker if ejecting
+	seq r3 r2 INGOTSIZE
+	ls r4 stack INTERNALSLOT Occupied # Only if something is in the stacker
+	and r3 r3 r4
+	s stack Activate r3
+	
+	# If printer is closed but stacker is set to 500, set it to 1
+	seq r3 r1 INGOTSIZE
+	seqz r4 r0
+	and r3 r3 r4 # 1 if stacker should be reset, 0 if nothing should happen
+	select r2 r3 1 r2
+	s stack Setting r2
+	
+	# Increment device counter
+	PowerInc:
+	add counter counter 1
+	ble counter MAXDEVICES power
+	
+	yield
+	
+	move counter 0
+	# Loop through all pairs of printers and stackers
+	checkCount:
+	alias print dr15
+	add counter counter 1 # stacker is always one above printer
+	alias stack dr15
+	
+	# Continue if device does not exist
+	bdns print checkCountInc
+	bdns stack checkCountInc
+	
+	l currenthash print RecipeHash
+	pop lasthash
+	push currenthash
+	sne setting lasthash currenthash
+	s print ClearMemory setting
+	s stack Activate setting
+	
+	l r0 stack Setting
+	l r1 print ExportCount
+	
+	blt r1 r0 checkCountInc # If still more to print, continue
+	
+	# Export count has been reached, stop the printer
+	s print Activate 0
+	s print ClearMemory 1
+	
+	# Increment device counter
+	checkCountInc:
+	add counter counter 1
+	add sp sp 1
+	ble counter MAXDEVICES checkCount
+	
+	yield
 j start
