@@ -1,0 +1,32 @@
+alias ActiveVent d0
+alias PAT d1
+alias MasterSwitch d2
+alias InteriorGasSensor d3
+
+define MaxPressure 3000 # kPa
+define MaxTemp 301.15 # K (28C)
+
+alias PATPressure r15
+alias InteriorTemp r14
+alias SwitchSetting r13
+
+init:
+s ActiveVent Mode 1 # Inward
+start:
+	yield
+	bdns MasterSwitch switchOn
+	l SwitchSetting MasterSwitch Setting
+	beqz SwitchSetting switchOff
+	
+	switchOn:
+	l PATPressure PAT Pressure
+	
+	slt r0 PATPressure MaxPressure
+	slt r1 InteriorTemp MaxTemp
+	and r0 r0 r1
+	s ActiveVent On r0
+j start
+
+switchOff:
+s ActiveVent On 0
+j start

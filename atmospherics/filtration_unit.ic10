@@ -9,6 +9,7 @@ alias ResetNeeded r11
 
 define MaxOutputPressure 5000 # kPa
 define MaxInputTemperature 425 # K
+define MinRatio 0.25 # 25%
 
 define ColorCarbonDioxide 1 # Grey
 define ColorNitrogen 7 # Black
@@ -32,7 +33,7 @@ start:
 	# l InputRatio db RatioPollutantInput
 	# l InputRatio db RatioVolatilesInput
 	# l InputRatio db RatioWaterInput
-	ceil InputRatio InputRatio
+	sgt InputRatio InputRatio MinRatio
 	l OutputPressure db PressureOutput
 	slt OutputPressure OutputPressure MaxOutputPressure
 	l InputTemperature db TemperatureInput

@@ -25,7 +25,7 @@ define EAST 90
 
 ### USER CONFIGURATION ###
 # The direction the sensor's data port is facing
-move SensorDirection WEST
+move SensorDirection EAST
 # The direction the solar panels' data ports are facing
 move SolarPanelsDirection WEST
 ### END USER CONFIGURATION ###
@@ -42,9 +42,8 @@ move LastKnownSunriseVertical 90
 
 start:
 	yield
-	l SensorHorizontal DaylightSensor Horizontal
-	l SensorVertical DaylightSensor Vertical
 	l SensorActivation DaylightSensor Activate
+	jal adjustAngles
 	
 	bltal PreviousActivation SensorActivation saveSunrise
 	bgt PreviousActivation SensorActivation endDay
@@ -52,12 +51,6 @@ start:
 	beqz SensorActivation start
 	
 	dayTime:
-add SPVertical VerticalAdjustmentTerm SensorVertical 
-	mod SPVertical SPVertical 360
-	
-	sub SPHorizontal SensorHorizontal HorizontalAdjustmentTerm
-	mod SPHorizontal SPHorizontal 360
-	
 	sb SolarPanels Horizontal SPHorizontal
 	sb SolarPanelsDual Horizontal SPHorizontal
 	
@@ -74,7 +67,18 @@ sb SolarPanelsDual Vertical LastKnownSunriseVertical
 move PreviousActivation SensorActivation
 j start
 
+adjustAngles:
+	l SensorHorizontal DaylightSensor Horizontal
+	l SensorVertical DaylightSensor Vertical
+add SPVertical VerticalAdjustmentTerm SensorVertical 
+	mod SPVertical SPVertical 360
+	
+	sub SPHorizontal SensorHorizontal HorizontalAdjustmentTerm
+	mod SPHorizontal SPHorizontal 360
+j ra
+
 saveSunrise:
-move LastKnownSunriseHorizontal SensorHorizontal
-move LastKnownSunriseVertical SensorVertical
+move LastKnownSunriseHorizontal SPHorizontal
+move LastKnownSunriseVertical SPVertical
+s db Setting SPVertical
 j ra
