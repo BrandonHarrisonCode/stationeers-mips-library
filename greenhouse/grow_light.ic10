@@ -1,0 +1,17 @@
+alias SetPower r15
+alias SecDarkPerDay r14
+
+define GrowLights HASH("StructureGrowLight")
+
+# 12 minutes out of 20 minutes in a day
+define SecLightPerDay 720
+define SecondsPerDay 1200 # 20 min * 60 sec/min
+
+sub SecDarkPerDay SecondsPerDay SecLightPerDay
+
+start:
+	sb GrowLights On 1
+	sleep SecLightPerDay
+	sb GrowLights On 0
+	sleep SecDarkPerDay
+j start

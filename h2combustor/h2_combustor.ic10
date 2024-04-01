@@ -8,7 +8,7 @@ define MinInputPressure 500 # kPa
 define MaxOutputPressure 3000 # kPa
 define MaxStage2Pressure 2000 # kPa
 define Stage1TempThreshold 425 # K
-define Stage1MaxLiters 10 # L
+define Stage1MaxLiters 100 # L
 define Stage1MinLiters 1 # L
 define MaxStage1Pressure 1000 # kPa
 ##### End User Config #####
@@ -51,8 +51,9 @@ j start
 calcMoles:
 	l Stage1Moles Stage1 TotalMoles
 	l Stage1WaterRatio Stage1 RatioWater
-	l Stage1SteamRatio Stage1 RatioSteam
-	add r0 Stage1WaterRatio Stage1SteamRatio
+	# l Stage1SteamRatio Stage1 RatioSteam
+	# add r0 Stage1WaterRatio Stage1SteamRatio
+	move r0 Stage1WaterRatio
 	mul r0 r0 Stage1Moles
 	div Stage1WaterLiters r0 WaterMolsPerLiter
 j ra

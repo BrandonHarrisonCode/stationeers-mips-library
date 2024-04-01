@@ -19,6 +19,34 @@ define ColorPollutants 5 # Yellow
 define ColorVolatiles 4 # Red
 define ColorWater 0 # Blue
 
+# Could create a master controller that could control up to 6 atmospherics units.
+# This way, I could check each of the atmospherics, and set some value that lets them know what filters they have.
+# I don't think I have enough lines to define them here, but I could do it in a separate script.
+# 
+# define WaterFilter HASH("ItemGasFilterWater")
+# define VolatilesFilter HASH("ItemGasFilterVolatiles")
+# define PollutantsFilter HASH("ItemGasFilterPollutants")
+# define OxygenFilter HASH("ItemGasFilterOxygen")
+# define NitrousOxideFilter HASH("ItemGasFilterNitrousOxide")
+# define NitrogenFilter HASH("ItemGasFilterNitrogen")
+# define CarbonDioxideFilter HASH("ItemGasFilterCarbonDioxide")
+
+# define WaterFilterM HASH("ItemGasFilterWaterM")
+# define VolatilesFilterM HASH("ItemGasFilterVolatilesM")
+# define PollutantsFilterM HASH("ItemGasFilterPollutantsM")
+# define OxygenFilterM HASH("ItemGasFilterOxygenM")
+# define NitrousOxideFilterM HASH("ItemGasFilterNitrousOxideM")
+# define NitrogenFilterM HASH("ItemGasFilterNitrogenM")
+# define CarbonDioxideFilterM HASH("ItemGasFilterCarbonDioxideM")
+
+# define WaterFilterL HASH("ItemGasFilterWaterL")
+# define VolatilesFilterL HASH("ItemGasFilterVolatilesL")
+# define PollutantsFilterL HASH("ItemGasFilterPollutantsL")
+# define OxygenFilterL HASH("ItemGasFilterOxygenL")
+# define NitrousOxideFilterL HASH("ItemGasFilterNitrousOxideL")
+# define NitrogenFilterL HASH("ItemGasFilterNitrogenL")
+# define CarbonDioxideFilterL HASH("ItemGasFilterCarbonDioxideL")
+
 init:
 s db On 1
 bdns WarningLight start
