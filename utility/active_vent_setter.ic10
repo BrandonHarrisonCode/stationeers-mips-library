@@ -1,0 +1,28 @@
+alias ActiveVent d0
+alias Dial d1
+
+alias SetValue r15
+alias ActiveVentMode r14
+alias SetPressure r13
+
+define OutwardMode 0
+define InwardMode 1
+
+init:
+s Dial Mode 500
+start:
+yield
+l SetValue Dial Setting
+l ActiveVentMode ActiveVent Mode
+mul SetPressure SetValue 100
+beqal ActiveVentMode InwardMode inward
+beqal ActiveVentMode OutwardMode outward
+j start
+
+inward:
+s ActiveVent PressureInternal SetPressure
+j ra
+
+outward:
+s ActiveVent PressureExternal SetPressure
+j ra

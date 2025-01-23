@@ -21,74 +21,71 @@ alias StartingStrength r7
 
 init:
 s StatusLED On 1
+s db Setting 101
+yield
 start:
-    s StatusLED Color 0 # Blue
 	yield
 	jal search
-    s StatusLED Color 6 # White
     yield
     beq StartingStrength -1 start
 	bgtzal StartingStrength resolve
-    s StatusLED Color 7 # Black
     yield
 j start
 
 # Scans for contacts in a search pattern
 search:
-    s StatusLED Color 1 # Grey
     yield
 	s Dish On 1
 	s Dish Setting MinimumPower
-    move SVertical 45
+    move SVertical 30
     move SHorizontal 0
     push ra
     jal moveTo
     pop ra
 	l StartingStrength Dish SignalStrength
-	s db Setting StartingStrength
-    s StatusLED Color 5 # Yellow
+    s db Setting StartingStrength
     yield
 j ra
 
 # Attempts to aim the dish at the contact
 resolve:
-    s StatusLED Color 2 # Green
     yield
+    resolveLoop:
     l CVertical Dish Vertical
     l CHorizontal Dish Horizontal
+    l StartingStrength Dish SignalStrength 
+    mul r0 StartingStrength 0.25
 
-    add SVertical CVertical 1
-    s StatusLED Color 8 # Brown
-    push ra
-    jal moveTo
-    l VerticalPlus Dish SignalStrength 
-    s db Setting VerticalPlus
-    move SVertical CVertical
-    sleep 5
-
-    add SHorizontal CHorizontal 1
-    s StatusLED Color 9 # Khaki
+    add SVertical CVertical r0
+    mod SVertical SVertical 90
+    push
     jal moveTo
     pop ra
-    l HorizontalPlus Dish SignalStrength
-    s db Setting HorizontalPlus
-    sleep 5
+    l r1 Dish SignalStrength
+
+    l StartingStrength Dish SignalStrength
+    bgt StartingStrength 1 resolveLoop
 j ra
 
 # Moves the dish to the specified position at `SVertical` and `SHorizontal`
 moveTo:
-    s StatusLED Color 3 # Orange
     s Dish Vertical SVertical
     s Dish Horizontal SHorizontal
     loop:
     yield
         l CVertical Dish Vertical
         l CHorizontal Dish Horizontal
-        sap r0 CVertical SVertical 0.005 # Within half a percentage of difference
-        sap r1 CHorizontal SHorizontal 0.005
+        sub r0 SVertical CVertical
+        abs r0 r0
+        slt r0 r0 1
+        yield
+        sub r1 SHorizontal CHorizontal
+        abs r1 r1
+        slt r1 r1 1
+        yield
         and r0 r0 r1
     beqz r0 loop
-    s StatusLED Color 4 # Red
+    sleep 5
 j ra
 
 interrogate:

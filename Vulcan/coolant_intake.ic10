@@ -1,0 +1,24 @@
+### Coolant Intake
+# This program controls any regular or large powered vent by using a gas sensor to detect the external temperature.
+
+define MaxExternalTemp 425 # 425K = 151C
+
+define PoweredVents HASH("StructurePoweredVent")
+define LargePoweredVents HASH("StructurePoweredVentLarge")
+define GasSensors HASH("StructureGasSensor")
+
+alias ExternalTemp r15
+alias PowerState r14
+
+define Inward 1
+init:
+sb PoweredVents Mode Inward
+sb LargePoweredVents Mode Inward
+start:
+	yield
+	lb ExternalTemp GasSensors Temperature Average
+	s db Setting ExternalTemp
+	slt PowerState ExternalTemp MaxExternalTemp
+	sb PoweredVents On PowerState
+	sb LargePoweredVents On PowerState
+j start

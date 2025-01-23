@@ -1,0 +1,17 @@
+alias TempSensor d0
+alias H2Combustor d1
+alias PoweredVent d2 
+
+define MaxExternalTemp 425 # 425K = 151C
+
+alias ExternalTemp r15
+alias PowerState r14
+
+init:
+start:
+yield
+l ExternalTemp TempSensor Temperature
+slt PowerState ExternalTemp MaxExternalTemp
+s H2Combustor On PowerState
+s PoweredVent On PowerState
+j start
