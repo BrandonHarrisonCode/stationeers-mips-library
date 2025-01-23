@@ -1,117 +1,107 @@
-alias Print0 d0
-alias Stack0 d1
-alias Print1 d2
-alias Stack1 d3
-alias Print2 d4
-alias Stack2 d5
+define AutolatheHash HASH("StructureAutolathe")
+define ElectronicsPrinterHash HASH("StructureElectronicsPrinter")
+define HydraulicPipeBenderHash HASH("StructureHydraulicPipeBender")
+define ToolManufactoryHash HASH("StructureToolManufactory")
+define StackerHash HASH("StructureStacker")
+define AutolatheStacker HASH("Autolathe Stacker")
+define ElectronicsPrinterStacker HASH("Electronics Printer Stacker")
+define HydraulicPipeBenderStacker HASH("Hydraulic Pipe Bender Stacker")
+define ToolManufactoryStacker HASH("Tool Manufactory Stacker")
 
 alias counter r15
+alias print r14
+alias stack r13
 alias lasthash r0
 alias currenthash r1
 alias setting r2
+alias deviceExists r3
 
-define MAXDEVICES 5
+define MAXDEVICES 4 # The total number of printers that exist in the game / defined in the init section below
 define INGOTSIZE 500
 define INTERNALSLOT 2
 
 init:
-brdns Print0 5
-l lasthash Print0 RecipeHash
+push AutolatheHash
+push AutolatheStacker
+lb lasthash AutolatheHash RecipeHash Minimum
 push lasthash
-s Print0 ClearMemory 1
-
-brdns Print1 5
-l lasthash Print1 RecipeHash
+sb AutolatheHash ClearMemory 1
+push ElectronicsPrinterHash
+push ElectronicsPrinterStacker
+lb lasthash ElectronicsPrinterHash RecipeHash Minimum
 push lasthash
-s Print1 ClearMemory 1
-
-brdns Print2 5
-l lasthash Print2 RecipeHash
+sb ElectronicsPrinterHash ClearMemory 1
+push HydraulicPipeBenderHash
+push HydraulicPipeBenderStacker
+lb lasthash HydraulicPipeBenderHash RecipeHash Minimum
 push lasthash
-s Print2 ClearMemory 1
-
-# Make sure the stack is full
-loop:
-push 0
-blt sp 3 loop
+sb HydraulicPipeBenderHash ClearMemory 1
+push ToolManufactoryHash
+push ToolManufactoryStacker
+lb lasthash ToolManufactoryHash RecipeHash Minimum
+push lasthash
+sb ToolManufactoryHash ClearMemory 1
 
 start:
 	move counter 0
-	move sp 1
+	move sp 1 # Stacks start at 1
 	
-	# Loop through all pairs of printers and stackers
-	power:
-	alias print dr15
-	add counter counter 1 # stacker is always one above printer
-	alias stack dr15
+	# Loop through all pairs of printers and stackers and give a tick to handle power changes before handling logic changes
+	logic:
+	peek print
+	add sp sp 1
+	peek stack
+	add sp sp 1
 	
-	# Continue if device does not exist
-	bdns print PowerInc
-	bdns stack PowerInc
+	lb deviceExists print PrefabHash Maximum
+	beqz deviceExists logicInc # Continue if printer does not exist
+	lbn deviceExists StackerHash stack PrefabHash Maximum
+	beqz deviceExists logicInc # Continue if stacker does not exist
 	
 	# Turn on stacker if printer is on
-	l setting print On
-	s stack On setting
+	lb setting print On Minimum
+	sbn StackerHash stack On setting
 	
-	l r0 print Open
-	l r1 stack Setting
+	lb r0 print Open Minimum
+	lbn r1 StackerHash stack Setting Minimum
 	
 	# If printer is open (ejecting ingots), set stacker to 500
 	select r2 r0 INGOTSIZE r1
-	s stack Setting r2
+	sbn StackerHash stack Setting r2
 	
 	# Constantly clear stacker if ejecting
 	seq r3 r2 INGOTSIZE
-	ls r4 stack INTERNALSLOT Occupied # Only if something is in the stacker
+lbns r4 StackerHash stack INTERNALSLOT Occupied Minimum # Only if something is in the stacker 
 	and r3 r3 r4
-	s stack Activate r3
+	sbn StackerHash stack Activate r3
 	
 	# If printer is closed but stacker is set to 500, set it to 1
 	seq r3 r1 INGOTSIZE
 	seqz r4 r0
 	and r3 r3 r4 # 1 if stacker should be reset, 0 if nothing should happen
 	select r2 r3 1 r2
-	s stack Setting r2
+	sbn StackerHash stack Setting r2
 	
-	# Increment device counter
-	PowerInc:
-	add counter counter 1
-	ble counter MAXDEVICES power
-	
-	yield
-	
-	move counter 0
-	# Loop through all pairs of printers and stackers
-	checkCount:
-	alias print dr15
-	add counter counter 1 # stacker is always one above printer
-	alias stack dr15
-	
-	# Continue if device does not exist
-	bdns print checkCountInc
-	bdns stack checkCountInc
-	
-	l currenthash print RecipeHash
+	lb currenthash print RecipeHash Minimum
 	pop lasthash
 	push currenthash
 	sne setting lasthash currenthash
-	s print ClearMemory setting
-	s stack Activate setting
+	sb print ClearMemory setting
+	sbn StackerHash stack Activate setting
 	
-	l r0 stack Setting
-	l r1 print ExportCount
+	lbn r0 StackerHash stack Setting Minimum
+	lb r1 print ExportCount Minimum
 	
-	blt r1 r0 checkCountInc # If still more to print, continue
+	blt r1 r0 logicInc # If still more to print, continue
 	
 	# Export count has been reached, stop the printer
-	s print Activate 0
-	s print ClearMemory 1
+	sb print Activate 0
+	sb print ClearMemory 1
 	
 	# Increment device counter
-	checkCountInc:
-	add counter counter 1
+	logicInc:
 	add sp sp 1
-	ble counter MAXDEVICES checkCount
-	
+	add counter counter 1
+	ble counter MAXDEVICES logic
 	yield
 j start
