@@ -102,6 +102,7 @@ lbns r4 StackerHash stack INTERNALSLOT Occupied Minimum # Only if something is i
 	logicInc:
 	add sp sp 1
 	add counter counter 1
-	ble counter MAXDEVICES logic
+	mod r0 counter 
 	yield
+	ble counter MAXDEVICES logic
 j start
