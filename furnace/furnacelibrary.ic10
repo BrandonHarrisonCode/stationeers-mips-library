@@ -42,63 +42,63 @@ BWait:
 	select ResNr r0 ResNr 1
 	select ResNr ResNr ResNr ResMax
 	jr ResNr #
-	select hashValue hashValue hashValue -1301215609
-	select hashValue hashValue hashValue -404336834
-	select hashValue hashValue hashValue -290196476
-	select hashValue hashValue hashValue -929742000
-	select hashValue hashValue hashValue 226410516
-	select hashValue hashValue hashValue 2134647745
-	select hashValue hashValue hashValue -1406385572
-	select hashValue hashValue hashValue -654790771
-	select hashValue hashValue hashValue 502280180
-	select hashValue hashValue hashValue -82508479
-	select hashValue hashValue hashValue -297990285
-	select hashValue hashValue hashValue 1058547521
-	select hashValue hashValue hashValue 412924554
-	select hashValue hashValue hashValue 1579842814
-	select hashValue hashValue hashValue -787796599
-	select hashValue hashValue hashValue -1897868623
-	select hashValue hashValue hashValue 156348098
+	select hashValue hashValue hashValue HASH("ItemIronIngot")
+	select hashValue hashValue hashValue HASH("ItemCopperIngot")
+	select hashValue hashValue hashValue HASH("ItemSiliconIngot")
+	select hashValue hashValue hashValue HASH("ItemSilverIngot")
+	select hashValue hashValue hashValue HASH("ItemGoldIngot")
+	select hashValue hashValue hashValue HASH("ItemLeadIngot")
+	select hashValue hashValue hashValue HASH("ItemNickelIngot")
+	select hashValue hashValue hashValue HASH("ItemSteelIngot")
+	select hashValue hashValue hashValue HASH("ItemElectrumIngot")
+	select hashValue hashValue hashValue HASH("ItemSolderIngot")
+	select hashValue hashValue hashValue HASH("ItemInvarIngot")
+	select hashValue hashValue hashValue HASH("ItemConstantanIngot")
+	select hashValue hashValue hashValue HASH("ItemAstroloyIngot")
+	select hashValue hashValue hashValue HASH("ItemHastelloyIngot")
+	select hashValue hashValue hashValue HASH("ItemInconelIngot")
+	select hashValue hashValue hashValue HASH("ItemStelliteIngot")
+	select hashValue hashValue hashValue HASH("ItemWaspaloyIngot")
 	seq r0 hashValue hashMem
 	add r12 r12 1
 	select r12 r0 r12 0
 	blt r12 Delay BWait
 	move PresMM 1100.1
 	move TempMM 500.2
-	beq hashValue 2134647745 SetValue ##Lead
+	beq hashValue HASH("ItemLeadIngot") SetValue ##Lead
 	move TempMM 700.2
-	beq hashValue -404336834 SetValue ##Copper
-	beq hashValue 226410516 SetValue ##Gold
-	beq hashValue -929742000 SetValue ##Silver
+	beq hashValue HASH("ItemCopperIngot") SetValue ##Copper
+	beq hashValue HASH("ItemGoldIngot") SetValue ##Gold
+	beq hashValue HASH("ItemSilverIngot") SetValue ##Silver
 	move TempMM 900.2
-	beq hashValue -1301215609 SetValue ##Iron
-	beq hashValue -1406385572 SetValue ##Nickel
+	beq hashValue HASH("ItemIronIngot") SetValue ##Iron
+	beq hashValue HASH("ItemNickelIngot") SetValue ##Nickel
 	move TempMM 1000.2
-	beq hashValue -290196476 SetValue ##Silicon
-	beq hashValue -654790771 SetValue ## Steel
+	beq hashValue HASH("ItemSiliconIngot") SetValue ##Silicon
+	beq hashValue HASH("ItemSteelIngot") SetValue ## Steel
 	move TempMM 400.05
-	beq hashValue -82508479 SetValue ## Solder
+	beq hashValue HASH("ItemSolderIngot") SetValue ## Solder
 	move PresMM 31000.39
 	move TempMM 1100.2
-	beq hashValue 412924554 SetValue ##Astroloy
+	beq hashValue HASH("ItemAstroloyIngot") SetValue ##Astroloy
 	move PresMM 21000.3
-	beq hashValue 1058547521 SetValue ## Constantan
+	beq hashValue HASH("ItemConstantanIngot") SetValue ## Constantan
 	move PresMM 23750.2375
 	move TempMM 700.2
-	beq hashValue -787796599 SetValue ## Inconell
+	beq hashValue HASH("ItemInconelIngot") SetValue ## Inconel
 	move PresMM 1000.02
-	beq hashValue 502280180 SetValue ## Electrum
+	beq hashValue HASH("ItemElectrumIngot") SetValue ## Electrum
 	move PresMM 11000.19
 	move TempMM 1900.21
-	beq hashValue -1897868623 SetValue ## Stellite
+	beq hashValue HASH("ItemStelliteIngot") SetValue ## Stellite
 	move PresMM 26000.29
 	move TempMM 975.0975
-	beq hashValue 1579842814 SetValue ## Hastaloy
+	beq hashValue HASH("ItemHastelloyIngot") SetValue ## Hastelloy
 	move PresMM 51000.51
 	move TempMM 500.07
-	beq hashValue 156348098 SetValue ## Waspaloy
+	beq hashValue HASH("ItemWaspaloyIngot") SetValue ## Waspaloy
 	move PresMM 19000.19000
-	move TempMM 1300.14 ## invar
+	move TempMM 1300.14 ## Invar
 	SetValue:
 	floor TempMin TempMM
 	sub TempMM TempMM TempMin
