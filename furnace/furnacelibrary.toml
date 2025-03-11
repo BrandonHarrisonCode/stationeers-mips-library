@@ -1,0 +1,19 @@
+[db]
+Setting = 1
+
+[d0]
+PrefabHash = "StructureAdvancedFurnace"
+RecipeHash = 0
+Temperature = 326
+Pressure = 1345
+
+[d1]
+PrefabHash = "StructureLogicButton"
+Setting = 0
+
+[d2]
+PrefabHash = "StructureLogicButton"
+Setting = 0
+
+[d4]
+PrefabHash = "StructureCircuitHousing"
