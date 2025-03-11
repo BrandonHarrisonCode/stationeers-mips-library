@@ -14,7 +14,6 @@ alias SetTemp r13
 alias SetPres r14
 define ResMax 17
 define Delay 6 #Ticks (before changes are made)
-l ResNr db Setting # Allow setting current recipe for debug purposes
 BWait:
 	s db Setting hashValue
 	l r0 Furnace RecipeHash
