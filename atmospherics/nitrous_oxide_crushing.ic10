@@ -1,14 +1,14 @@
-alias d0 IceCrusher
-alias d1 GasPA
-alias d2 LiquidPA
-alias d3 VolumePump
-alias d4 PipeHeater
+alias IceCrusher d0
+alias GasPA d1
+alias LiquidPA d2
+alias VolumePump d3
+alias PipeHeater d4
 
-alias r15 GasPressure
-alias r14 LiquidTemperature
-alias r13 LiquidTotalVolume
-alias r12 LiquidFluidVolume
-alias r11 LiquidFullness
+alias GasPressure r15 
+alias LiquidTemperature r14
+alias LiquidTotalVolume r13
+alias LiquidFluidVolume r12
+alias LiquidFullness r11
 
 define MaxPressure 40000 # kPa - The volume pump will turn on above this pressure
 define SafetyPressure 50000 # kPa - The IceCrusher will turn off if the pressure exceeds this value
