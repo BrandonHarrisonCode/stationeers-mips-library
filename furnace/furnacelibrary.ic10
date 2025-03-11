@@ -64,7 +64,7 @@ BWait:
 	add r12 r12 1
 	select r12 r0 r12 0
 	blt r12 Delay BWait
-	move PresMM 1100.1 # 1,100kPa - 10,000kPa
+	move PresMM 200.1 # 200kPa - 10,000kPa
 	move TempMM 500.2 # 500k - 2000k
 	beq hashValue HASH("ItemLeadIngot") SetValue ##Lead
 	move TempMM 700.2 # 700k - 2000k
@@ -76,6 +76,7 @@ BWait:
 	beq hashValue HASH("ItemNickelIngot") SetValue ##Nickel
 	move TempMM 1000.2 # 1000k - 2000k
 	beq hashValue HASH("ItemSiliconIngot") SetValue ##Silicon
+	move PresMM 1100.1 # 1,100kPa - 10,000kPa
 	beq hashValue HASH("ItemSteelIngot") SetValue ## Steel
 	move TempMM 400.05 # 400k - 500k
 	beq hashValue HASH("ItemSolderIngot") SetValue ## Solder
