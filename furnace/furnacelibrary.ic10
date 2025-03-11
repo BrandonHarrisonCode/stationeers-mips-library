@@ -14,6 +14,7 @@ alias SetTemp r13
 alias SetPres r14
 define ResMax 17
 define Delay 6 #Ticks (before changes are made)
+l ResNr db Setting # Allow setting current recipe for debug purposes
 BWait:
 	s db Setting hashValue
 	l r0 Furnace RecipeHash
@@ -37,7 +38,7 @@ BWait:
 	sne r0 r0 ResNr
 	max ResNr ResNr 1
 	SelectRecipe:
-	select hashValue r0 0 hashValue
+	select hashValue r0 0 hashValue # If we changed the recipe, change the hashValue to 0
 	sle r0 ResNr ResMax
 	select ResNr r0 ResNr 1
 	select ResNr ResNr ResNr ResMax
@@ -63,68 +64,64 @@ BWait:
 	add r12 r12 1
 	select r12 r0 r12 0
 	blt r12 Delay BWait
-	move PresMM 1100.1
-	move TempMM 500.2
+	move PresMM 1100.1 # 1,100kPa - 10,000kPa
+	move TempMM 500.2 # 500k - 2000k
 	beq hashValue HASH("ItemLeadIngot") SetValue ##Lead
-	move TempMM 700.2
+	move TempMM 700.2 # 700k - 2000k
 	beq hashValue HASH("ItemCopperIngot") SetValue ##Copper
 	beq hashValue HASH("ItemGoldIngot") SetValue ##Gold
 	beq hashValue HASH("ItemSilverIngot") SetValue ##Silver
-	move TempMM 900.2
+	move TempMM 900.2 # 900k - 2000k
 	beq hashValue HASH("ItemIronIngot") SetValue ##Iron
 	beq hashValue HASH("ItemNickelIngot") SetValue ##Nickel
-	move TempMM 1000.2
+	move TempMM 1000.2 # 1000k - 2000k
 	beq hashValue HASH("ItemSiliconIngot") SetValue ##Silicon
 	beq hashValue HASH("ItemSteelIngot") SetValue ## Steel
-	move TempMM 400.05
+	move TempMM 400.05 # 400k - 500k
 	beq hashValue HASH("ItemSolderIngot") SetValue ## Solder
-	move PresMM 31000.39
-	move TempMM 1100.2
+	move PresMM 31000.39 # 31,000kPa - 39,000kPa
+	move TempMM 1100.2 # 1100k - 2000k
 	beq hashValue HASH("ItemAstroloyIngot") SetValue ##Astroloy
-	move PresMM 21000.3
+	move PresMM 21000.3 # 21,000kPa - 30,000kPa
 	beq hashValue HASH("ItemConstantanIngot") SetValue ## Constantan
-	move PresMM 23750.2375
-	move TempMM 700.2
+	move PresMM 23750.2375 # 23,750kPa - 23,750kPa
+	move TempMM 700.2 # 700k - 2000k
 	beq hashValue HASH("ItemInconelIngot") SetValue ## Inconel
-	move PresMM 1000.02
+	move PresMM 1000.02 # 1,000kPa - 2,000kPa
 	beq hashValue HASH("ItemElectrumIngot") SetValue ## Electrum
-	move PresMM 11000.19
-	move TempMM 1900.21
+	move PresMM 11000.19 # 11,000kPa - 19,000kPa
+	move TempMM 1900.21 # 1,900k - 2,100k
 	beq hashValue HASH("ItemStelliteIngot") SetValue ## Stellite
-	move PresMM 26000.29
-	move TempMM 975.0975
+	move PresMM 26000.29 # 26,000kPa - 29,000kPa
+	move TempMM 975.0975 # 975k - 975k
 	beq hashValue HASH("ItemHastelloyIngot") SetValue ## Hastelloy
-	move PresMM 51000.51
-	move TempMM 500.07
+	move PresMM 51000.51 # 51,000kPa - 51,000kPa
+	move TempMM 500.07 # 500k - 700k
 	beq hashValue HASH("ItemWaspaloyIngot") SetValue ## Waspaloy
-	move PresMM 19000.19000
-	move TempMM 1300.14 ## Invar
+	move PresMM 19000.19000 # 19,000kPa - 19,000kPa
+	move TempMM 1300.14 # 1,300k - 1,400k ## Invar
 	SetValue:
-	floor TempMin TempMM
+	floor TempMin TempMM # Get the fractional part of TempMM
 	sub TempMM TempMM TempMin
 	mul TempMM TempMM 10000
 	round TempMM TempMM
-	floor PresMin PresMM
+	l SetTemp Furnace Temperature # Round furnace temperature to nearest 100
+	div SetTemp SetTemp 100
+	round SetTemp SetTemp
+	mul SetTemp SetTemp 100
+	floor PresMin PresMM # Get the fractional part of PresMM
 	sub PresMM PresMM PresMin
-	div SetTemp SetTemp 100
-	round SetTemp SetTemp
 	mul PresMM PresMM 100000
-	l SetTemp Furnace Temperature
-	div SetTemp SetTemp 100
-	round SetTemp SetTemp
-	mul SetTemp SetTemp 100 # Round to nearest 100
-	l SetPres Furnace Pressure
+	round PresMM PresMM
+	l SetPres Furnace Pressure # Round furnace pressure to nearest 500
 	div SetPres SetPres 500
 	round SetPres SetPres
-	mul SetPres SetPres 500 # Round to nearest 500
-	round PresMM PresMM
-	max SetPres SetPres PresMin
-	brlez PresMM 2
-	min SetPres SetPres PresMM
-	max SetTemp SetTemp TempMin
-	brlez TempMM 2
-	min SetTemp SetTemp TempMM
-	div r0 SetTemp 10000
+mul SetPres SetPres 500 
+	max SetPres SetPres PresMin # Set the furnace to be between the decimal part of PresMM and the fractional part of PresMM * 100000
+min SetPres SetPres PresMM 
+	max SetTemp SetTemp TempMin # Set the furnace to be between the decimal part of TempMM and the fractional part of TempMM * 10000
+min SetTemp SetTemp TempMM 
+	div r0 SetTemp 10000 # Encode the desired temperature and pressure into a single number
 	add r0 r0 SetPres
-	s ICFurnaceController Setting r0
+	s ICFurnaceController Setting r0 # Set the furnace controller IC housing to the encoded value
 j BWait
