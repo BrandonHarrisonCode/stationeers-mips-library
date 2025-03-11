@@ -1,0 +1,55 @@
+alias d0 IceCrusher
+alias d1 GasPA
+alias d2 LiquidPA
+alias d3 VolumePump
+alias d4 PipeHeater
+
+alias r15 GasPressure
+alias r14 LiquidTemperature
+alias r13 LiquidTotalVolume
+alias r12 LiquidFluidVolume
+alias r11 LiquidFullness
+
+define MaxPressure 40000 # kPa - The volume pump will turn on above this pressure
+define SafetyPressure 50000 # kPa - The IceCrusher will turn off if the pressure exceeds this value
+define CrushTemperature 190 # K - The temperature that the IceCrusher will heat the output to
+define MinLiquidTemperature 252 # K - The temperature at which the pipe heater will turn on
+define LiquidRatio 0.8 # The maximum fullness of the liquid pipes
+
+init:
+s IceCrusher Lock 1
+s GasPA Lock 1
+s LiquidPA Lock 1
+s VolumePump Lock 1
+s PipeHeater Lock 1
+
+s IceCrusher On 0
+s IceCrusher Setting CrushTemperature
+
+s GasPA On 1
+s LiquidPA On 1
+
+s VolumePump On 0
+s VolumePump Setting 10 # 10L, maximum setting
+
+s PipeHeater On 0
+
+start:
+	yield
+	l GasPressure GasPA Pressure
+	l LiquidTemperature LiquidPA Temperature
+	l LiquidTotalVolume LiquidPA Volume
+	l LiquidFluidVolume LiquidPA VolumeOfLiquid
+	div LiquidFullness LiquidFluidVolume LiquidTotalVolume
+	
+	slt r0 GasPressure MaxPressure # Control gas pressure
+	s VolumePump On r0
+	
+	sgt r0 GasPressure SafetyPressure # Control Ice Crusher power
+	slt r1 LiquidFullness LiquidRatio
+	and r0 r0 r1
+	s IceCrusher On r0
+	
+	slt r0 LiquidTemperature MinLiquidTemperature # Control pipe heater
+	s PipeHeater On r0
+j start
