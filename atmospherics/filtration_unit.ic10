@@ -14,14 +14,6 @@ define MaxInputTemperature 425 # K
 define MinRatio 0.25 # 25%
 define InputSafetyPressure 30000 # kPa
 
-define ColorCarbonDioxide 1 # Grey
-define ColorNitrogen 7 # Black
-define ColorNitrousOxide 2 # Green
-define ColorOxygen 6 # White
-define ColorPollutants 5 # Yellow
-define ColorVolatiles 4 # Red
-define ColorWater 0 # Blue
-
 # Could create a master controller that could control up to 6 atmospherics units.
 # This way, I could check each of the atmospherics, and set some value that lets them know what filters they have.
 # I don't think I have enough lines to define them here, but I could do it in a separate script.
@@ -91,13 +83,13 @@ start:
 	seqz r0 r0
 	and r0 r0 WarningLightFlashing
 	beqz WarningLightFlashing filterScreen
-	s WarningLight Color ColorCarbonDioxide # Grey
-	# s WarningLight Color ColorNitrogen # Black
-	# s WarningLight Color ColorNitrousOxide # Green
-	# s WarningLight Color ColorOxygen # White
-	# s WarningLight Color ColorPollutants # Yellow
-	# s WarningLight Color ColorVolatiles # Red
-	# s WarningLight Color ColorWater # Blue
+	s WarningLight Color Color.Gray
+	# s WarningLight Color Color.Black
+	# s WarningLight Color Color.Green
+# s WarningLight Color Color.White 
+# s WarningLight Color Color.Yellow 
+# s WarningLight Color Color.Red 
+# s WarningLight Color Color.Blue 
 	s WarningLight On r0
 	
 	filterScreen:
