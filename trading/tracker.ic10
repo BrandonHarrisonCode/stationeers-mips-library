@@ -1,95 +1,127 @@
-# 1. Search for contacts
-# 2. Resolve a contact once detected
-# 3. Interrogate contact
-# 4. Identify contact
-# 5. Hail or dismiss contact
-
 alias Dish d0
 alias StatusLED d1
 
-define MinimumPower 500 # Watts
+alias traderID r15
+alias signalStrength r14
+alias interrogationProgress r13
+alias minimumWatts r12
+alias wattsReachingContact r11
+alias setWatts r10
+alias horizontalSearchDirection r9
+alias verticalSearchDirection r8
+alias newSignalStrength r7
 
-alias CVertical r15
-alias CHorizontal r14
-alias SVertical r13
-alias SHorizontal r12
-alias VerticalPlus r11
-alias VerticalMinus r10
-alias HorizontalPlus r9
-alias HorizontalMinus r8
-alias StartingStrength r7
+define HorizontalSearchStep 30
+define VerticalSearchStep 15
+define TrackFactor 5 # The divisor for the degree offset to determine how much to move the dish, higher numbers are more precise but take longer
 
 init:
-s StatusLED On 1
-s db Setting 101
-yield
-start:
-	yield
-	jal search
-    yield
-    beq StartingStrength -1 start
-	bgtzal StartingStrength resolve
-    yield
-j start
+s Dish On 1
+move horizontalSearchDirection 1
+move verticalSearchDirection 1
 
-# Scans for contacts in a search pattern
 search:
-    yield
-	s Dish On 1
-	s Dish Setting MinimumPower
-    move SVertical 30
-    move SHorizontal 0
-    push ra
-    jal moveTo
-    pop ra
-	l StartingStrength Dish SignalStrength
-    s db Setting StartingStrength
-    yield
-j ra
-
-# Attempts to aim the dish at the contact
-resolve:
-    yield
-    resolveLoop:
-    l CVertical Dish Vertical
-    l CHorizontal Dish Horizontal
-    l StartingStrength Dish SignalStrength 
-    mul r0 StartingStrength 0.25
-
-    add SVertical CVertical r0
-    mod SVertical SVertical 90
-    push
-    jal moveTo
-    pop ra
-    l r1 Dish SignalStrength
-
-    l StartingStrength Dish SignalStrength
-    bgt StartingStrength 1 resolveLoop
-j ra
-
-# Moves the dish to the specified position at `SVertical` and `SHorizontal`
-moveTo:
-    s Dish Vertical SVertical
-    s Dish Horizontal SHorizontal
-    loop:
-    yield
-        l CVertical Dish Vertical
-        l CHorizontal Dish Horizontal
-        sub r0 SVertical CVertical
-        abs r0 r0
-        slt r0 r0 1
-        yield
-        sub r1 SHorizontal CHorizontal
-        abs r1 r1
-        slt r1 r1 1
-        yield
-        and r0 r0 r1
-    beqz r0 loop
+    s StatusLED On 1
+    s StatusLED Color Color.White
+    s Dish BestContactFilter -1 # Investigate all traders
     sleep 5
+    l traderID Dish SignalID
+    l signalStrength Dish SignalStrength 
+    sgtz r0 signalStrength # Is there a signal
+    l interrogationProgress Dish InterrogationProgress
+    slez r1 interrogationProgress # Have we already tried to resolve this signal
+    and r0 r0 r1
+    bgtz r0 track # Contact found
+    # Contact not found
+    l r0 Dish Horizontal
+    add r0 r0 HorizontalSearchStep
+    s Dish Horizontal r0
+    l r1 Dish Vertical
+    brle r0 360 2 # If we have gone full circle, move the VerticalStepSize 
+    add r1 r1 VerticalSearchStep
+    brle r1 90 2 # If we have scanned the full vertical range, reset vertical 
+    move r1 VerticalSearchStep
+    s Dish Vertical r1
+    
+    waitForMove:
+    yield
+    l r0 Dish Idle
+    beqz r0 waitForMove
+j search
+
+track:
+s Dish BestContactFilter traderID # Ignore all other signals besides the one we found
+s StatusLED On 1
+l minimumWatts Dish MinimumWattsToContact
+l wattsReachingContact Dish WattsReachingContact
+blt minimumWatts wattsReachingContact interrogate # Can begin interrogation
+l setWatts Dish Setting
+bgt minimumWatts setWatts failure # There will never be enough watts to contact this trader
+
+trackHorizontal:
+    s StatusLED Color Color.Orange
+    l r0 Dish Horizontal
+    div r1 signalStrength TrackFactor
+    mul r1 r1 horizontalSearchDirection
+    add r0 r0 r1
+    s Dish Horizontal r0
+
+    jal evaluateTracking
+    beq r0 1 trackVertical # We have improved the signal horizontally, now track vertically
+    mul horizontalSearchDirection horizontalSearchDirection -1 # We moved in the wrong direction
+j track
+
+trackVertical:
+    s StatusLED Color Color.Yellow
+    l r0 Dish Horizontal
+    l r0 Dish Vertical
+    div r1 signalStrength TrackFactor
+    mul r1 r1 verticalSearchDirection
+    add r0 r0 r1
+    s Dish Vertical r0
+
+    jal evaluateTracking
+    beq r0 1 track # We have improved the signal vertically, now track horizontally
+    mul verticalSearchDirection verticalSearchDirection -1 # We moved in the wrong direction
+j trackVertical
+
+evaluateTracking:
+yield
+l r0 Dish InterrogationProgress
+bgtz r0 search # We have already made contact with this signal
+l r0 Dish SignalID
+beq r0 -1 failure # The trader has left before we tracked them
+l newSignalStrength Dish SignalStrength
+beq newSignalStrength -1 evaluateTracking # Wait for the signal to appear
+sle r0 newSignalStrength signalStrength # Is the new signal stronger than the old one
+move signalStrength newSignalStrength
 j ra
 
 interrogate:
+s StatusLED Color Color.Green
+s Dish Activate 1 
 
-identify:
+waitForInterrogation:
+yield
+l r0 StatusLED On
+seqz r0 r0
+s StatusLED On r0 # Blink LED
+l r0 Dish SignalID
+beq r0 -1 failure # The trader has left before we interrogated them
+l r0 Dish InterrogationProgress
+bne r0 1 waitForInterrogation # Wait for the interrogation to complete
 
-hail:
+success:
+s StatusLED Color Color.Blue
+s StatusLED On 1
+l r0 db Setting
+add r0 r0 1
+s db Setting r0 # Count successful interrogations
+sleep 1
+j search
+
+failure:
+s StatusLED Color Color.Red
+s StatusLED On 1
+sleep 1
+search
