@@ -1,65 +1,64 @@
 alias counter r15
 alias printer r14
 alias stacker r13
-alias lasthash r0
-alias currenthash r1
-alias setting r2
-alias deviceExists r3
+alias stackLength r12
+alias lasthash r11
+alias currenthash r10
+alias setting r9
+alias deviceExists r8
 
 define MAXDEVICES 4 # The total number of printers that exist in the game / defined in the init section below
 define INGOTSIZE 500
 define INTERNALSLOT 2
 
 init:
-push HASH("StructureAutolathe")
-push HASH("Autolathe Stacker")
 lb lasthash HASH("StructureAutolathe") RecipeHash Minimum
 push lasthash
+push HASH("StructureAutolathe")
+push HASH("Autolathe Stacker")
 sb HASH("StructureAutolathe") ClearMemory 1
 
-push HASH("StructureElectronicsPrinter")
-push HASH("Electronics Printer Stacker")
 lb lasthash HASH("StructureElectronicsPrinter") RecipeHash Minimum
 push lasthash
+push HASH("StructureElectronicsPrinter")
+push HASH("Electronics Printer Stacker")
 sb HASH("StructureElectronicsPrinter") ClearMemory 1
 
-push HASH("StructureHydraulicPipeBender")
-push HASH("Hydraulic Pipe Bender Stacker")
 lb lasthash HASH("StructureHydraulicPipeBender") RecipeHash Minimum
 push lasthash
+push HASH("StructureHydraulicPipeBender")
+push HASH("Hydraulic Pipe Bender Stacker")
 sb HASH("StructureHydraulicPipeBender") ClearMemory 1
 
-push HASH("StructureToolManufactory")
-push HASH("Tool Manufactory Stacker")
 lb lasthash HASH("StructureToolManufactory") RecipeHash Minimum
 push lasthash
+push HASH("StructureToolManufactory")
+push HASH("Tool Manufactory Stacker")
 sb HASH("StructureToolManufactory") ClearMemory 1
 
+move stackLength sp
+
 start:
-	move counter 0
-	move sp 1 # Stacks start at 1
-	
-	# Loop through all pairs of printers and stackers and give a tick to handle power changes before handling logic changes
-	logic:
-	peek printer
-	add sp sp 1
-	peek stacker
-	add sp sp 1
+	select sp sp sp stackLength # Reset stack pointer if it reaches 0
+	pop stacker
+	pop printer
 	
 	lb deviceExists printer PrefabHash Maximum
-	beqz deviceExists logicInc # Continue if printer does not exist
+	beqz deviceExists start # Continue if printer does not exist
 	lbn deviceExists HASH("StructureStacker") stacker PrefabHash Maximum
-	beqz deviceExists logicInc # Continue if stacker does not exist
+	beqz deviceExists start # Continue if stacker does not exist
 	
 	# Turn on stacker if printer is on
 	lb setting printer On Minimum
 	sbn HASH("StructureStacker") stacker On setting
+	# Continue if the printer is off
+	beqz setting start
 	
 	lb r0 printer Open Minimum
 	lbn r1 HASH("StructureStacker") stacker Setting Minimum
 	
 	# If printer is open (ejecting ingots), set stacker to 500
-	select r2 r0 INGOTSIZE r1
+	select r2 r0 INGOTSIZE r1 
 	sbn HASH("StructureStacker") stacker Setting r2
 	
 	# Constantly clear stacker if ejecting
@@ -75,27 +74,24 @@ start:
 	select r2 r3 1 r2
 	sbn HASH("StructureStacker") stacker Setting r2
 	
+	# Reset memory if we change the recipe
 	lb currenthash printer RecipeHash Minimum
 	pop lasthash
 	push currenthash
+	sub sp sp 1
 	sne setting lasthash currenthash
 	sb printer ClearMemory setting
 	sbn HASH("StructureStacker") stacker Activate setting
-	
-	lbn r0 HASH("StructureStacker") stacker Setting Minimum
-	lb r1 printer ExportCount Minimum
-	
-	blt r1 r0 logicInc # If still more to printer, continue
-	
+
+	# Check if we're done printing
+	lb r0 printer ExportCount Minimum
+	lbn r1 HASH("StructureStacker") stacker Setting Minimum
+	blt r0 r1 end # If still more to printer, continue
+
 	# Export count has been reached, stop the printer
 	sb printer Activate 0
 	sb printer ClearMemory 1
 	
-	# Increment device counter
-	logicInc:
-	add sp sp 1
-	add counter counter 1
-	mod r0 counter 
+	end:
 	yield
-	ble counter MAXDEVICES logic
 j start
