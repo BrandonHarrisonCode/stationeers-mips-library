@@ -13,6 +13,7 @@ alias newSignalStrength r7
 
 define HorizontalSearchStep 30
 define VerticalSearchStep 15
+define SearchDelay 5 # The amount of time to attempt to resolve signals during the search phase before abandoning
 define TrackFactor 5 # The divisor for the degree offset to determine how much to move the dish, higher numbers are more precise but take longer
 
 init:
@@ -24,7 +25,7 @@ search:
     s StatusLED On 1
     s StatusLED Color Color.White
     s Dish BestContactFilter -1 # Investigate all traders
-    sleep 5
+    sleep SearchDelay
     l traderID Dish SignalID
     l signalStrength Dish SignalStrength 
     sgtz r0 signalStrength # Is there a signal
@@ -112,8 +113,9 @@ l r0 Dish InterrogationProgress
 bne r0 1 waitForInterrogation # Wait for the interrogation to complete
 
 success:
-s StatusLED Color Color.Blue
+yield
 s StatusLED On 1
+s StatusLED Color Color.Blue
 l r0 db Setting
 add r0 r0 1
 s db Setting r0 # Count successful interrogations
@@ -121,7 +123,8 @@ sleep 1
 j search
 
 failure:
+yield
 s StatusLED Color Color.Red
 s StatusLED On 1
 sleep 1
-search
+j search
