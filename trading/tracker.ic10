@@ -14,7 +14,7 @@ alias newSignalStrength r7
 define HorizontalSearchStep 30
 define VerticalSearchStep 15
 define SearchDelay 5 # The amount of time to attempt to resolve signals during the search phase before abandoning
-define TrackFactor 5 # The divisor for the degree offset to determine how much to move the dish, higher numbers are more precise but take longer
+define TrackFactor 4 # The divisor for the degree offset to determine how much to move the dish, higher numbers are more precise but take longer
 
 init:
 s Dish On 1
@@ -74,11 +74,11 @@ j track
 
 trackVertical:
     s StatusLED Color Color.Yellow
-    l r0 Dish Horizontal
     l r0 Dish Vertical
     div r1 signalStrength TrackFactor
     mul r1 r1 verticalSearchDirection
     add r0 r0 r1
+    max r0 r0 5 # Clamp vertical to 5-90, the horizontal signal will never improve if vertical is 0
     s Dish Vertical r0
 
     jal evaluateTracking
@@ -94,7 +94,7 @@ l r0 Dish SignalID
 beq r0 -1 failure # The trader has left before we tracked them
 l newSignalStrength Dish SignalStrength
 beq newSignalStrength -1 evaluateTracking # Wait for the signal to appear
-sle r0 newSignalStrength signalStrength # Is the new signal stronger than the old one
+slt r0 newSignalStrength signalStrength # Is the new signal stronger than the old one. Use lt rather than le since if the signal didn't improve we either skipped past it perfectly or we are at the extremes of motion
 move signalStrength newSignalStrength
 j ra
 
