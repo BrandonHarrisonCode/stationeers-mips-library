@@ -43,15 +43,15 @@ start:
 	pop printer
 	
 	lb deviceExists printer PrefabHash Maximum
-	beqz deviceExists start # Continue if printer does not exist
+	beqz deviceExists skip # Continue if printer does not exist
 	lbn deviceExists HASH("StructureStacker") stacker PrefabHash Maximum
-	beqz deviceExists start # Continue if stacker does not exist
+	beqz deviceExists skip # Continue if stacker does not exist
 	
 	# Turn on stacker if printer is on
 	lb setting printer On Minimum
 	sbn HASH("StructureStacker") stacker On setting
 	# Continue if the printer is off
-	beqz setting start
+	beqz setting skip
 	
 	lb r0 printer Open Minimum
 	lbn r1 HASH("StructureStacker") stacker Setting Minimum
@@ -77,7 +77,6 @@ start:
 	lb currenthash printer RecipeHash Minimum
 	pop lasthash
 	push currenthash
-	sub sp sp 1
 	sne setting lasthash currenthash
 	sb printer ClearMemory setting
 	sbn HASH("StructureStacker") stacker Activate setting
@@ -93,4 +92,6 @@ start:
 	
 	end:
 	yield
+	skip:
+	sub sp sp 1 # Accounting for lasthash/currenthash
 j start
