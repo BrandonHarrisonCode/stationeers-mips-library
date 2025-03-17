@@ -1,16 +1,6 @@
-define AutolatheHash HASH("StructureAutolathe")
-define ElectronicsPrinterHash HASH("StructureElectronicsPrinter")
-define HydraulicPipeBenderHash HASH("StructureHydraulicPipeBender")
-define ToolManufactoryHash HASH("StructureToolManufactory")
-define StackerHash HASH("StructureStacker")
-define AutolatheStacker HASH("Autolathe Stacker")
-define ElectronicsPrinterStacker HASH("Electronics Printer Stacker")
-define HydraulicPipeBenderStacker HASH("Hydraulic Pipe Bender Stacker")
-define ToolManufactoryStacker HASH("Tool Manufactory Stacker")
-
 alias counter r15
-alias print r14
-alias stack r13
+alias printer r14
+alias stacker r13
 alias lasthash r0
 alias currenthash r1
 alias setting r2
@@ -21,26 +11,29 @@ define INGOTSIZE 500
 define INTERNALSLOT 2
 
 init:
-push AutolatheHash
-push AutolatheStacker
-lb lasthash AutolatheHash RecipeHash Minimum
+push HASH("StructureAutolathe")
+push HASH("Autolathe Stacker")
+lb lasthash HASH("StructureAutolathe") RecipeHash Minimum
 push lasthash
-sb AutolatheHash ClearMemory 1
-push ElectronicsPrinterHash
-push ElectronicsPrinterStacker
-lb lasthash ElectronicsPrinterHash RecipeHash Minimum
+sb HASH("StructureAutolathe") ClearMemory 1
+
+push HASH("StructureElectronicsPrinter")
+push HASH("Electronics Printer Stacker")
+lb lasthash HASH("StructureElectronicsPrinter") RecipeHash Minimum
 push lasthash
-sb ElectronicsPrinterHash ClearMemory 1
-push HydraulicPipeBenderHash
-push HydraulicPipeBenderStacker
-lb lasthash HydraulicPipeBenderHash RecipeHash Minimum
+sb HASH("StructureElectronicsPrinter") ClearMemory 1
+
+push HASH("StructureHydraulicPipeBender")
+push HASH("Hydraulic Pipe Bender Stacker")
+lb lasthash HASH("StructureHydraulicPipeBender") RecipeHash Minimum
 push lasthash
-sb HydraulicPipeBenderHash ClearMemory 1
-push ToolManufactoryHash
-push ToolManufactoryStacker
-lb lasthash ToolManufactoryHash RecipeHash Minimum
+sb HASH("StructureHydraulicPipeBender") ClearMemory 1
+
+push HASH("StructureToolManufactory")
+push HASH("Tool Manufactory Stacker")
+lb lasthash HASH("StructureToolManufactory") RecipeHash Minimum
 push lasthash
-sb ToolManufactoryHash ClearMemory 1
+sb HASH("StructureToolManufactory") ClearMemory 1
 
 start:
 	move counter 0
@@ -48,55 +41,55 @@ start:
 	
 	# Loop through all pairs of printers and stackers and give a tick to handle power changes before handling logic changes
 	logic:
-	peek print
+	peek printer
 	add sp sp 1
-	peek stack
+	peek stacker
 	add sp sp 1
 	
-	lb deviceExists print PrefabHash Maximum
+	lb deviceExists printer PrefabHash Maximum
 	beqz deviceExists logicInc # Continue if printer does not exist
-	lbn deviceExists StackerHash stack PrefabHash Maximum
+	lbn deviceExists HASH("StructureStacker") stacker PrefabHash Maximum
 	beqz deviceExists logicInc # Continue if stacker does not exist
 	
 	# Turn on stacker if printer is on
-	lb setting print On Minimum
-	sbn StackerHash stack On setting
+	lb setting printer On Minimum
+	sbn HASH("StructureStacker") stacker On setting
 	
-	lb r0 print Open Minimum
-	lbn r1 StackerHash stack Setting Minimum
+	lb r0 printer Open Minimum
+	lbn r1 HASH("StructureStacker") stacker Setting Minimum
 	
 	# If printer is open (ejecting ingots), set stacker to 500
 	select r2 r0 INGOTSIZE r1
-	sbn StackerHash stack Setting r2
+	sbn HASH("StructureStacker") stacker Setting r2
 	
 	# Constantly clear stacker if ejecting
 	seq r3 r2 INGOTSIZE
-lbns r4 StackerHash stack INTERNALSLOT Occupied Minimum # Only if something is in the stacker 
+	lbns r4 HASH("StructureStacker") stacker INTERNALSLOT Occupied Minimum # Only if something is in the stacker 
 	and r3 r3 r4
-	sbn StackerHash stack Activate r3
+	sbn HASH("StructureStacker") stacker Activate r3
 	
 	# If printer is closed but stacker is set to 500, set it to 1
 	seq r3 r1 INGOTSIZE
 	seqz r4 r0
 	and r3 r3 r4 # 1 if stacker should be reset, 0 if nothing should happen
 	select r2 r3 1 r2
-	sbn StackerHash stack Setting r2
+	sbn HASH("StructureStacker") stacker Setting r2
 	
-	lb currenthash print RecipeHash Minimum
+	lb currenthash printer RecipeHash Minimum
 	pop lasthash
 	push currenthash
 	sne setting lasthash currenthash
-	sb print ClearMemory setting
-	sbn StackerHash stack Activate setting
+	sb printer ClearMemory setting
+	sbn HASH("StructureStacker") stacker Activate setting
 	
-	lbn r0 StackerHash stack Setting Minimum
-	lb r1 print ExportCount Minimum
+	lbn r0 HASH("StructureStacker") stacker Setting Minimum
+	lb r1 printer ExportCount Minimum
 	
-	blt r1 r0 logicInc # If still more to print, continue
+	blt r1 r0 logicInc # If still more to printer, continue
 	
 	# Export count has been reached, stop the printer
-	sb print Activate 0
-	sb print ClearMemory 1
+	sb printer Activate 0
+	sb printer ClearMemory 1
 	
 	# Increment device counter
 	logicInc:
