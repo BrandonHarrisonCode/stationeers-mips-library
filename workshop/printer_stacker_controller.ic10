@@ -7,7 +7,6 @@ alias currenthash r10
 alias setting r9
 alias deviceExists r8
 
-define MAXDEVICES 4 # The total number of printers that exist in the game / defined in the init section below
 define INGOTSIZE 500
 define INTERNALSLOT 2
 
