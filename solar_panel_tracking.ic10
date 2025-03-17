@@ -5,24 +5,26 @@ alias DaylightSensor d0
 
 alias SensorDirection r15
 alias SolarPanelsDirection r14
-alias VerticalAdjustmentTerm r13
-alias HorizontalAdjustmentTerm r12
-alias SensorHorizontal r11
-alias SensorVertical r10
-alias SPHorizontal r9
-alias SPVertical r8
-alias SensorActivation r7
+alias HorizontalAdjustmentTerm r13
+alias SPHorizontal r12
+alias SPVertical r11
+alias SensorActivation r10
 
-alias PreviousActivation r6
-alias LastKnownSunriseHorizontal r5
-alias LastKnownSunriseVertical r4
+alias PreviousActivation r9
+alias LastKnownSunriseHorizontal r8
+alias LastKnownSunriseVertical r7
+alias Counter r6
 
-init:
 define NORTH 0
 define WEST 270
 define SOUTH 180
 define EAST 90
 
+define VerticalAdjustmentTerm 90
+
+define ActivationDelay 60 # Ticks, 30 seconds
+
+init:
 ### USER CONFIGURATION ###
 # The direction the sensor's data port is facing
 move SensorDirection EAST
@@ -30,21 +32,17 @@ move SensorDirection EAST
 move SolarPanelsDirection WEST
 ### END USER CONFIGURATION ###
 
-move VerticalAdjustmentTerm 90
 sub r0 SensorDirection SolarPanelsDirection
 add r0 r0 90 # Solar panel / daylight sensor offset
 mod r0 r0 360
 move HorizontalAdjustmentTerm r0
 
 move PreviousActivation 1
-move LastKnownSunriseHorizontal 0
-move LastKnownSunriseVertical 90
 
 start:
 	yield
 	l SensorActivation DaylightSensor Activate
 	jal adjustAngles
-	
 	bltal PreviousActivation SensorActivation saveSunrise
 	bgt PreviousActivation SensorActivation endDay
 	move PreviousActivation SensorActivation
@@ -58,26 +56,42 @@ start:
 	sb SolarPanelsDual Vertical SPVertical
 	
 j start
+
+
 endDay:
+# Primarily to avoid eclipses
+waitDelay:
+move Counter 0
+waitDelayLoop:
+yield
+l SensorActivation DaylightSensor Activate
+beq SensorActivation PreviousActivation start # State changed before delay reached, return to start
+add Counter Counter 1
+blt Counter ActivationDelay waitDelayLoop
+
 sb SolarPanels Horizontal LastKnownSunriseHorizontal
 sb SolarPanelsDual Horizontal LastKnownSunriseHorizontal
 
 sb SolarPanels Vertical LastKnownSunriseVertical
 sb SolarPanelsDual Vertical LastKnownSunriseVertical
 move PreviousActivation SensorActivation
+move LastKnownSunriseHorizontal 0
+move LastKnownSunriseVertical 0
 j start
 
 adjustAngles:
-	l SensorHorizontal DaylightSensor Horizontal
-	l SensorVertical DaylightSensor Vertical
-add SPVertical VerticalAdjustmentTerm SensorVertical 
-	mod SPVertical SPVertical 360
-	
-	sub SPHorizontal SensorHorizontal HorizontalAdjustmentTerm
-	mod SPHorizontal SPHorizontal 360
+l r0 DaylightSensor Horizontal
+l r1 DaylightSensor Vertical
+add SPVertical VerticalAdjustmentTerm r1 
+mod SPVertical SPVertical 360
+
+sub SPHorizontal r0 HorizontalAdjustmentTerm
+mod SPHorizontal SPHorizontal 360
 j ra
 
 saveSunrise:
+bnez LastKnownSunriseHorizontal ra
+bnez LastKnownSunriseVertical ra # Sunrise already set today
 move LastKnownSunriseHorizontal SPHorizontal
 move LastKnownSunriseVertical SPVertical
 s db Setting SPVertical
