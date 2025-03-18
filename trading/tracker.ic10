@@ -43,7 +43,6 @@ search:
     brle r1 90 2 # If we have scanned the full vertical range, reset vertical 
     move r1 VerticalSearchStep
     s Dish Vertical r1
-    
     waitForMove:
     yield
     l r0 Dish Idle
@@ -58,7 +57,6 @@ l wattsReachingContact Dish WattsReachingContact
 blt minimumWatts wattsReachingContact interrogate # Can begin interrogation
 l setWatts Dish Setting
 bgt minimumWatts setWatts failure # There will never be enough watts to contact this trader
-
 trackHorizontal:
     s StatusLED Color Color.Orange
     l r0 Dish Horizontal
@@ -87,15 +85,15 @@ trackVertical:
 j trackVertical
 
 evaluateTracking:
-yield
-l r0 Dish InterrogationProgress
-bgtz r0 search # We have already made contact with this signal
-l r0 Dish SignalID
-beq r0 -1 failure # The trader has left before we tracked them
-l newSignalStrength Dish SignalStrength
-beq newSignalStrength -1 evaluateTracking # Wait for the signal to appear
-slt r0 newSignalStrength signalStrength # Is the new signal stronger than the old one. Use lt rather than le since if the signal didn't improve we either skipped past it perfectly or we are at the extremes of motion
-move signalStrength newSignalStrength
+    yield
+    l r0 Dish InterrogationProgress
+    bgtz r0 search # We have already made contact with this signal
+    l r0 Dish SignalID
+    beq r0 -1 failure # The trader has left before we tracked them
+    l newSignalStrength Dish SignalStrength
+    beq newSignalStrength -1 evaluateTracking # Wait for the signal to appear
+    slt r0 newSignalStrength signalStrength # Is the new signal stronger than the old one. Use lt rather than le since if the signal didn't improve we either skipped past it perfectly or we are at the extremes of motion
+    move signalStrength newSignalStrength
 j ra
 
 interrogate:
@@ -113,18 +111,17 @@ l r0 Dish InterrogationProgress
 bne r0 1 waitForInterrogation # Wait for the interrogation to complete
 
 success:
-yield
-s StatusLED On 1
-s StatusLED Color Color.Blue
-l r0 db Setting
-add r0 r0 1
-s db Setting r0 # Count successful interrogations
-sleep 1
+    yield
+    s StatusLED On 1
+    s StatusLED Color Color.Blue
+    l r0 db Setting
+    add r0 r0 1
+    s db Setting r0 # Count successful interrogations
+    sleep 1
 j search
-
 failure:
-yield
-s StatusLED Color Color.Red
-s StatusLED On 1
-sleep 1
+    yield
+    s StatusLED Color Color.Red
+    s StatusLED On 1
+    sleep 1
 j search
