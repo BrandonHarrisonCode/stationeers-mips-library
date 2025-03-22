@@ -1,22 +1,27 @@
-define DesiredGasPressure 1000 # kPa
+alias LiquidPAT d0
+alias PipeHeater d1
 
-alias PATGas d0
-alias PATLiquid d1
-alias PurgeValve d2
+alias liquidTemperature r15
+alias totalMoles r14
 
-alias GasPressure r14
-alias LiquidPressure r15
+define MinLiquidTemperature 262 # K - The temperature at which the pipe heater will turn on
 
 init:
-s PurgeValve Lock 1
-s PurgeValve On 0
-s PurgeValve Setting 0
+s PipeHeater Lock 1
+s PipeHeater On 0
 
-# Idea, code the phase change chart so that it can figure out the temperature dynamically
+l r0 LiquidPAT PrefabHash
+bne r0 HASH("StructureLiquidPipeAnalyzer") start # Don't error out if d0 is a tank
+s d0 Lock 1
+s d0 On 1
+
 start:
-yield
-l GasPressure PATGas Pressure
-l LiquidPressure PATLiquid Pressure
-slt r0 GasPressure DesiredGasPressure
-s PurgeValve On r0
+	yield
+	l liquidTemperature LiquidPAT Temperature
+	l totalMoles LiquidPAT TotalMoles
+	
+	slt r0 liquidTemperature MinLiquidTemperature # Control pipe heater
+    sgt r1 totalMoles 0 # Don't heat up an empty pipe (temp will be 0!)
+    and r0 r0 r1
+	s PipeHeater On r0
 j start
