@@ -1,0 +1,47 @@
+alias carbonDioxidePressure r15
+alias nitrogenPressure r14
+alias oxygenPressure r13
+alias volatilesPressure r12
+alias nitrousPressure r11
+alias nitrousVolume r10
+alias waterVolume r9
+
+define DISPLAYHASH HASH("StructureConsoleLED5")
+define GASTANKHASH HASH("StructureTankSmallInsulated") # Change depending on the tank type
+define LIQUIDTANKHASH HASH("StructureLiquidTankSmallInsulated") # Change depending on the tank type
+
+init:
+sbn DISPLAYHASH HASH("Carbon Dioxide Pressure Display") On 1
+sbn DISPLAYHASH HASH("Nitrogen Pressure Display") On 1
+sbn DISPLAYHASH HASH("Oxygen Pressure Display") On 1
+sbn DISPLAYHASH HASH("Volatiles Pressure Display") On 1
+sbn DISPLAYHASH HASH("Nitrous Oxide Pressure Display") On 1
+sbn DISPLAYHASH HASH("Nitrous Oxide Volume Display") On 1
+sbn DISPLAYHASH HASH("Water Volume Display") On 1
+
+sbn DISPLAYHASH HASH("Carbon Dioxide Pressure Display") Setting -1
+sbn DISPLAYHASH HASH("Nitrogen Pressure Display") Setting -1
+sbn DISPLAYHASH HASH("Oxygen Pressure Display") Setting -1
+sbn DISPLAYHASH HASH("Volatiles Pressure Display") Setting -1
+sbn DISPLAYHASH HASH("Nitrous Oxide Pressure Display") Setting -1
+sbn DISPLAYHASH HASH("Nitrous Oxide Volume Display") Setting -1
+sbn DISPLAYHASH HASH("Water Volume Display") Setting -1
+
+start:
+    yield
+    lbn carbonDioxidePressure GASTANKHASH HASH("Carbon Dioxide Gas Tank") Pressure 0
+    lbn nitrogenPressure GASTANKHASH HASH("Nitrogen Gas Tank") Pressure 0
+    lbn oxygenPressure GASTANKHASH HASH("Oxygen Gas Tank") Pressure 0
+    lbn volatilesPressure GASTANKHASH HASH("Volatiles Gas Tank") Pressure 0
+    lbn nitrousPressure GASTANKHASH HASH("Nitrous Oxide Gas Tank") Pressure 0
+    lbn nitrousVolume LIQUIDTANKHASH HASH("Nitrous Oxide Liquid Tank") VolumeOfLiquid 0
+    lbn waterVolume LIQUIDTANKHASH HASH("Water Tank") VolumeOfLiquid 0
+
+    sbn DISPLAYHASH HASH("Carbon Dioxide Pressure Display") Setting carbonDioxidePressure
+    sbn DISPLAYHASH HASH("Nitrogen Pressure Display") Setting nitrogenPressure
+    sbn DISPLAYHASH HASH("Oxygen Pressure Display") Setting oxygenPressure
+    sbn DISPLAYHASH HASH("Volatiles Pressure Display") Setting volatilesPressure
+    sbn DISPLAYHASH HASH("Nitrous Oxide Pressure Display") Setting nitrousPressure
+    sbn DISPLAYHASH HASH("Nitrous Oxide Volume Display") Setting nitrousVolume
+    sbn DISPLAYHASH HASH("Water Volume Display") Setting waterVolume
+j start
