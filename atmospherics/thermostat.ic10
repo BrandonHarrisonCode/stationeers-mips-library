@@ -1,19 +1,53 @@
 alias GasSensor d0
-alias DigitalValve d1
-alias InteriorPA d2
+alias Cooler d1
+alias Heater d2
+alias Dial d3
 
-define MinTemp 291.15
-define MaxTemp 295.15
+alias maxTemp r15
+alias minTemp r14
+alias desiredTemp r13
+alias actualTemp r12
 
-define WallHeaters HASH("StructureWallHeater")
+define DefaultMinTemp 293.15 # Kelvin
+define DefaultMaxTemp 298.15 # Kelvin
+define DialMaxTemp 50 # Celsius
+define DialTempOffset 2 
+define KelvinOffset 273.15
+
+init:
+move maxTemp DefaultMaxTemp
+move minTemp DefaultMinTemp
+
+brdns Cooler 2
+s Cooler Lock 1
+
+brdns Heater 2
+s Cooler Lock 1
+
+brdns Dial 2
+s Dial Mode DialMaxTemp
 
 start:
-yield
-l r0 GasSensor Temperature
-slt r1 r0 MinTemp
-sb WallHeaters On r1
+    yield
 
-l r0 InteriorPA Temperature
-sgt r1 r0 MaxTemp
-s DigitalValve On r1
+    dial:
+    bdns Dial setTemp
+    l desiredTemp Dial Setting
+    add desiredTemp KelvinOffset desiredTemp 
+    s db Setting desiredTemp
+    add maxTemp desiredTemp DialTempOffset
+    sub minTemp desiredTemp DialTempOffset
+
+    setTemp:
+    l actualTemp GasSensor Temperature
+
+    bdns Cooler heater
+    cooler:
+    sgt r0 actualTemp maxTemp
+    s Cooler On r0
+
+    bdns Heater start
+    heater:
+    slt r0 actualTemp minTemp
+    s Heater On r0
 j start

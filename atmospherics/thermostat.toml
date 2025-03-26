@@ -1,0 +1,11 @@
+[d0]
+PrefabHash = "StructureGasSensor"
+Temperature = 300                 # 26.85C
+
+[d1]
+PrefabHash = "StructureDigitalValve"
+
+[d3]
+PrefabHash = "StructureLogicDial"
+Mode = 50
+Setting = 12
