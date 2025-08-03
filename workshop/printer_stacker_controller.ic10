@@ -35,6 +35,13 @@ push HASH("StructureToolManufactory")
 push HASH("Tool Manufactory Stacker")
 sb HASH("StructureToolManufactory") ClearMemory 1
 
+lb lasthash HASH("StructureRocketManufactory") RecipeHash Minimum
+push lasthash
+push HASH("StructureRocketManufactory")
+push HASH("Rocket Manufactory Stacker")
+sb HASH("StructureRocketManufactory") ClearMemory 1
+
+move sp 0
 move stackLength sp
 
 start:
