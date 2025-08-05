@@ -6,41 +6,14 @@ alias InputTemperature r14
 alias InputPressure r13
 alias OutputPressure r12
 alias SafetyPressureExceeded r11
-alias WarningLightFlashing r10
-alias ResetNeeded r9
+alias TooColdTemperature r10
+alias WarningLightFlashing r9
+alias ResetNeeded r8
 
-define MaxOutputPressure 5000 # kPa
-define MaxInputTemperature 425 # K
-define MinRatio 0.25 # 25%
-define InputSafetyPressure 30000 # kPa
-
-# Could create a master controller that could control up to 6 atmospherics units.
-# This way, I could check each of the atmospherics, and set some value that lets them know what filters they have.
-# I don't think I have enough lines to define them here, but I could do it in a separate script.
-# 
-# define WaterFilter HASH("ItemGasFilterWater")
-# define VolatilesFilter HASH("ItemGasFilterVolatiles")
-# define PollutantsFilter HASH("ItemGasFilterPollutants")
-# define OxygenFilter HASH("ItemGasFilterOxygen")
-# define NitrousOxideFilter HASH("ItemGasFilterNitrousOxide")
-# define NitrogenFilter HASH("ItemGasFilterNitrogen")
-# define CarbonDioxideFilter HASH("ItemGasFilterCarbonDioxide")
-
-# define WaterFilterM HASH("ItemGasFilterWaterM")
-# define VolatilesFilterM HASH("ItemGasFilterVolatilesM")
-# define PollutantsFilterM HASH("ItemGasFilterPollutantsM")
-# define OxygenFilterM HASH("ItemGasFilterOxygenM")
-# define NitrousOxideFilterM HASH("ItemGasFilterNitrousOxideM")
-# define NitrogenFilterM HASH("ItemGasFilterNitrogenM")
-# define CarbonDioxideFilterM HASH("ItemGasFilterCarbonDioxideM")
-
-# define WaterFilterL HASH("ItemGasFilterWaterL")
-# define VolatilesFilterL HASH("ItemGasFilterVolatilesL")
-# define PollutantsFilterL HASH("ItemGasFilterPollutantsL")
-# define OxygenFilterL HASH("ItemGasFilterOxygenL")
-# define NitrousOxideFilterL HASH("ItemGasFilterNitrousOxideL")
-# define NitrogenFilterL HASH("ItemGasFilterNitrogenL")
-# define CarbonDioxideFilterL HASH("ItemGasFilterCarbonDioxideL")
+define MaxOutputPressure 8000 # kPa | Don't filter if the output is above this pressure
+define MaxInputTemperature 425 # K | Don't filter unless below this temperature
+define MinRatio 0.25 # % | Don't filter unless greater than this percent (higher tends to be more efficient)
+define InputSafetyPressure 30000 # kPa | Try to filter if input is over this pressure (to help prevent overpressure events)
 
 init:
 s db On 1
@@ -49,10 +22,10 @@ s WarningLight On 0
 
 start:
 	yield
-	l InputRatio db RatioCarbonDioxideInput
+	# l InputRatio db RatioCarbonDioxideInput
 	# l InputRatio db RatioNitrogenInput
 	# l InputRatio db RatioNitrousOxideInput
-	# l InputRatio db RatioOxygenInput
+	l InputRatio db RatioOxygenInput
 	# l InputRatio db RatioPollutantInput
 	# l InputRatio db RatioVolatilesInput
 	# l InputRatio db RatioWaterInput
@@ -63,7 +36,20 @@ start:
 	l InputTemperature db TemperatureInput
 	slt InputTemperature InputTemperature MaxInputTemperature
 	sgt SafetyPressureExceeded InputPressure InputSafetyPressure
+	#sle TooColdTemperature InputTemperature 228 # K | Carbon Dioxide
+	# and TooColdTemperature TooColdTemperature InputRatio
+	# sle TooColdTemperature InputTemperature 50 # K | Nitrogen
+	# and TooColdTemperature TooColdTemperature InputRatio
+	#sle TooColdTemperature InputTemperature 262 # K | Nitrous Oxide
+	# and TooColdTemperature TooColdTemperature InputRatio
+	sle TooColdTemperature InputTemperature 66.4 # K | Oxygen
+	and TooColdTemperature TooColdTemperature InputRatio
+	# sle TooColdTemperature InputTemperature 183 # K | Pollutant
+	# and TooColdTemperature TooColdTemperature InputRatio
+	# sle TooColdTemperature InputTemperature 91.6 # K | Volatiles
+	# and TooColdTemperature TooColdTemperature InputRatio
 	and r0 OutputPressure InputRatio
+	or r0 r0 TooColdTemperature
 	and r0 r0 InputTemperature
 	or r0 r0 SafetyPressureExceeded
 	s db Mode r0
@@ -83,13 +69,13 @@ start:
 	seqz r0 r0
 	and r0 r0 WarningLightFlashing
 	beqz WarningLightFlashing filterScreen
-	s WarningLight Color Color.Gray
+	# s WarningLight Color Color.Gray
 	# s WarningLight Color Color.Black
 	# s WarningLight Color Color.Green
-# s WarningLight Color Color.White 
-# s WarningLight Color Color.Yellow 
-# s WarningLight Color Color.Red 
-# s WarningLight Color Color.Blue 
+	s WarningLight Color Color.White 
+	# s WarningLight Color Color.Yellow 
+	# s WarningLight Color Color.Red 
+	# s WarningLight Color Color.Blue 
 	s WarningLight On r0
 	
 	filterScreen:
