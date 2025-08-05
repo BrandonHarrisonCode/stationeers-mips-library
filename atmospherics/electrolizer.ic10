@@ -1,0 +1,52 @@
+# Only turn on if battery is above a certain threshold
+# Only turn on if there's enough water in the input pipe
+# Only turn on if oxygen or volatiles tank is too low
+# Turn off if there is too much gas in the output pipe 
+# Turn off if the oxygen or volatiles tank is too full
+
+define BatteryMin 0.75 # % |  Do not activate if the base battery is below this percentage
+define MaxOutputPressure 3000 # kPa | Do not activate if output is above this pressure
+define MinLiterWater 25 # L | Do not activate if below this amount of water
+define MaxHydrogenPressure 5000 # kPa | Do not activate if the Hydrogen tank is above this pressure
+define MaxOxygenPressure 5000 # kPa | Do not activate if the Oxygen tank is above this pressure
+
+alias HydrogenTank d0
+alias OxygenTank d1
+
+alias BatteryLevel r15
+alias OutputPressure r14
+alias LitersWater r13
+alias PressureHydrogen r12
+alias PressureOxygen r11
+
+define MolsPerLiter 55.6
+
+init:
+start:
+yield
+# lb r0 HASH("StructureBattery") Ratio Average
+# lb r1 HASH("StructureBatteryLarge") Ratio Average
+# add r0 r0 r1
+# div BatteryLevel r0 2
+lbn BatteryLevel HASH("StructureLogicMirror") HASH("Battery Mirror") Ratio Average
+
+l r0 db TotalMolesInput
+l r1 db RatioWaterInput
+mul r0 r0 r1
+div LitersWater r0 MolsPerLiter
+
+l OutputPressure db PressureOutput
+l PressureHydrogen HydrogenTank Pressure
+l PressureOxygen OxygenTank Pressure
+
+slt r0 OutputPressure MaxOutputPressure
+sgt r1 BatteryLevel BatteryMin
+sgt r2 LitersWater MinLiterWater
+slt r3 PressureHydrogen MaxHydrogenPressure
+slt r4 PressureOxygen MaxOxygenPressure
+mul r0 r0 r1
+mul r0 r0 r2
+mul r0 r0 r3
+mul r0 r0 r4
+s db Mode r0
+j start
