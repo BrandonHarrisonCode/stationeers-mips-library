@@ -1,0 +1,22 @@
+# Turns on all lights labeled "Night Light" when daylight sensor deactivates
+
+alias DayLightSensor d0
+
+alias IsDay r15
+
+init:
+start:
+yield
+    l IsDay DayLightSensor Activate
+    seqz r0 IsDay
+    sbn HASH("StructureWallLight") HASH("Night Light") On r0 
+    sbn HASH("StructureDiode") HASH("Night Light") On r0 
+    sbn HASH("StructureLightLong") HASH("Night Light") On r0 
+    sbn HASH("StructureLightLongAngled") HASH("Night Light") On r0 
+    sbn HASH("StructureLightLongWide") HASH("Night Light") On r0 
+    sbn HASH("StructureDiodeSlide") HASH("Night Light") On r0 
+    sbn HASH("StructureWallLightBattery") HASH("Night Light") On r0 
+    sbn HASH("StructureLightRound") HASH("Night Light") On r0 
+    sbn HASH("StructureLightRoundAngled") HASH("Night Light") On r0 
+    sbn HASH("StructureLightRoundSmall") HASH("Night Light") On r0 
+j start
