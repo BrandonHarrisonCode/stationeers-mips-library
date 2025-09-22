@@ -1,0 +1,89 @@
+alias ActiveVent d0
+alias IC10 d1
+
+alias InputRatio r15
+alias InputTemperature r14
+alias InputPressure r13
+alias OutputPressure r12
+alias SafetyPressureExceeded r11
+alias TooColdTemperature r10
+alias WarningLightFlashing r9
+alias ResetNeeded r8
+
+define MaxOutputPressure 80 # kPa | Don't filter if the output is above this pressure
+define MaxInputTemperature 425 # K | Don't filter unless below this temperature
+define MinRatio 0.0 # % | Don't filter unless greater than this percent (higher tends to be more efficient)
+define InputSafetyPressure 100000 # kPa | Try to filter if input is over this pressure (to help prevent overpressure events)
+define VentPressureInternal 500 # kPa | Pressure to maintain inside the vent
+
+init:
+s db On 1
+bdns ActiveVent start
+s ActiveVent Lock 1
+s ActiveVent Mode Vent.Inward
+s ActiveVent PressureInternal VentPressureInternal
+s ActiveVent On 0
+
+start:
+	yield
+	l InputRatio db RatioCarbonDioxideInput
+	# l InputRatio db RatioNitrogenInput
+	# l InputRatio db RatioNitrousOxideInput
+	# l InputRatio db RatioOxygenInput
+	# l InputRatio db RatioPollutantInput
+	# l InputRatio db RatioVolatilesInput
+	# l InputRatio db RatioWaterInput
+	sgt InputRatio InputRatio MinRatio
+	l InputPressure db PressureInput
+	l OutputPressure db PressureOutput
+	slt OutputPressure OutputPressure MaxOutputPressure
+	l InputTemperature db TemperatureInput
+	slt InputTemperature InputTemperature MaxInputTemperature
+	sgt SafetyPressureExceeded InputPressure InputSafetyPressure
+	and r0 OutputPressure InputRatio
+	and r0 r0 InputTemperature
+	or r0 r0 SafetyPressureExceeded
+	s db Mode r0
+
+	slt r0 InputPressure VentPressureInternal
+	s ActiveVent On r0
+	
+	filterCheck:
+	ls r0 db 0 Quantity
+	ls r1 db 1 Quantity
+	min r0 r0 r1
+	move r1 WarningLightFlashing
+	seqz WarningLightFlashing r0
+	xor r2 WarningLightFlashing r1
+	move ResetNeeded r2
+	
+	# warningLight:
+	# bdns WarningLight filterScreen
+	# l r0 WarningLight On
+	# seqz r0 r0
+	# and r0 r0 WarningLightFlashing
+	# beqz WarningLightFlashing filterScreen
+	# # s WarningLight Color Color.Gray
+	# # s WarningLight Color Color.Black
+	# # s WarningLight Color Color.Green
+	# # s WarningLight Color Color.White 
+	# # s WarningLight Color Color.Yellow 
+	# # s WarningLight Color Color.Red 
+	# # s WarningLight Color Color.Blue 
+	# s WarningLight On r0
+	
+	filterScreen:
+	bdns IC10 start
+	ls r0 db 0 PrefabHash
+	ls r1 db 1 PrefabHash
+	select r0 r0 r0 r1
+	l r1 IC10 Setting
+	beqz WarningLightFlashing checkreset
+s IC10 Setting r0 
+j start
+
+checkreset:
+select r0 ResetNeeded -1 r1
+move ResetNeeded 0
+s IC10 Setting r0
+j start
