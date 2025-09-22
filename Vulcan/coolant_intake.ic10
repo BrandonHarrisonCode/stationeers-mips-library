@@ -2,23 +2,37 @@
 # This program controls any regular or large powered vent by using a gas sensor to detect the external temperature.
 
 define MaxExternalTemp 425 # 425K = 151C
+define MaxInternalVolume 5000 # L
 
-define PoweredVents HASH("StructurePoweredVent")
-define LargePoweredVents HASH("StructurePoweredVentLarge")
-define GasSensors HASH("StructureGasSensor")
+alias ActiveVent1 d0
+alias ActiveVent2 d1
+alias ActiveVent3 d2
+alias GasSensor d3
+alias PAT d4
 
 alias ExternalTemp r15
-alias PowerState r14
+alias TankVolume r14
 
 define Inward 1
 init:
-sb PoweredVents Mode Inward
-sb LargePoweredVents Mode Inward
+s ActiveVent1 Mode Vent.Inward
+bdns ActiveVent2 start
+
+s ActiveVent2 Mode Vent.Inward
+bdns ActiveVent3 start
+
+s ActiveVent3 Mode Vent.Inward
 start:
 	yield
-	lb ExternalTemp GasSensors Temperature Average
-	s db Setting ExternalTemp
-	slt PowerState ExternalTemp MaxExternalTemp
-	sb PoweredVents On PowerState
-	sb LargePoweredVents On PowerState
+	l ExternalTemp GasSensor Temperature 
+	l TankVolume PAT VolumeOfLiquid
+	slt r0 ExternalTemp MaxExternalTemp
+	slt r1 TankVolume MaxInternalVolume
+	and r0 r0 r1
+
+	s ActiveVent1 On r0
+	bdns ActiveVent2 start
+	s ActiveVent2 On r0
+	bdns ActiveVent3 start
+	s ActiveVent3 On r0
 j start
