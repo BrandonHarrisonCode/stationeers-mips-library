@@ -1,0 +1,72 @@
+# alias PercentageDisplay $855C
+# alias IncomingChargeDisplay $8557
+# alias OutgoingChargeDisplay $8555
+# alias MasterAlarmLED $849B
+# alias DismissMasterAlarmButton $849D
+
+define WarningBatteryLevel 2 # 0 Empty, 1 Critical, 2 Very Low, 3 Low, 4 Medium, 5 High, 6 Full
+
+define StationBattery HASH("StructureBattery")
+
+alias MasterCaution r15
+
+init:
+s $855C On 1
+
+s $8557 Mode DisplayMode.Power
+s $8557 Color Color.Green
+s $8557 On 1
+
+s $8555 Mode DisplayMode.Power
+s $8555 Color Color.Red
+s $8555 On 1
+
+s $849B Color Color.Red
+
+s $849D Color Color.Red
+move MasterCaution 0
+start:
+    yield
+    # Battery percentage
+    lb r0 StationBattery Ratio Average
+    s $855C Setting r0
+    s db Setting r0
+    lb r1 StationBattery Mode Maximum
+    brne r1 1 2 # Critical
+    s $855C Color Color.Red
+    brne r1 2 2 # Very Low
+    s $855C Color Color.Red
+    brne r1 3 2 # Low
+    s $855C Color Color.Orange
+    brne r1 4 2 # Medium
+    s $855C Color Color.Yellow
+    brne r1 5 2 # High
+    s $855C Color Color.Green
+    brne r1 6 2 # Full
+    s $855C Color Color.Blue
+
+    # Incoming and outgoing charge
+    lb r1 StationBattery PowerPotential Average
+    lb r2 StationBattery PowerActual Average
+    sgt r3 r1 r2
+    select r3 r3 Color.Blue Color.Green
+    s $8557 Color r3 
+
+    s $8557 Setting r1
+    s $8555 Setting r2
+
+    # Master alarm if battery is very low
+    lb r1 StationBattery Mode Maximum
+    sle r0 r1 WarningBatteryLevel 
+
+    # Master alarm dismiss button
+    select r3 r0 Color.Red Color.Green
+    s $849D Color r3
+    l r2 $849D Activate
+    seqz r2 r2
+    and MasterCaution MasterCaution r2
+    or MasterCaution MasterCaution r0
+
+    # Control master light
+    s $849B On MasterCaution
+j start
