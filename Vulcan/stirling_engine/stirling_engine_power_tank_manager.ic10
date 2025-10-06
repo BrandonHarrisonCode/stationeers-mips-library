@@ -1,0 +1,51 @@
+alias DaytimePoweredVent d0
+alias NighttimePoweredVent d1
+alias DaytimeTank d2
+alias NighttimeTank d3
+alias StirlingInputPressureRegulator d4
+alias GasSensor d5
+
+define DaytimeMaxPressure 10000 # kPa | Max pressure for the daytime vent
+define DaytimeMinTemperature 900 # K | Min temperature for the daytime vent
+
+define NighttimeMaxPressure 5250 # kPa | Max pressure for the nighttime vent
+define NighttimeMaxTemperature 425 # K | Max temperature for the nighttime vent
+
+define StirlingMaxInputPressure 10000 # kPa | Max pressure for the stirling engine input regulator. Warning! Pressure over 11 mPa will instantly destroy the engine!
+
+alias ExternalTemperature r15 
+alias RoomTemperature r14
+alias RoomPressure r13
+alias BatteryCharge r12
+alias DaytimeTankPressure r11
+alias NighttimeTankPressure r10
+
+init:
+s DaytimePoweredVent Mode Vent.Inward
+s DaytimePoweredVent On 0 # Don't input more air if setup fails
+s DaytimePoweredVent Lock 1
+
+s NighttimePoweredVent Mode Vent.Inward
+s NighttimePoweredVent On 0 # Don't input more air if setup fails
+s NighttimePoweredVent Lock 1
+
+min r0 StirlingMaxInputPressure 10500 # Safety check to prevent setting above 11 mPa
+s StirlingInputPressureRegulator Setting r0
+s StirlingInputPressureRegulator On 1
+s StirlingInputPressureRegulator Lock 1
+
+start:
+    yield
+    # Make sure tanks are topped off
+    l ExternalTemperature GasSensor Temperature
+    l DaytimeTankPressure DaytimeTank Pressure 
+    l NighttimeTankPressure NighttimeTank Pressure 
+    slt r0 DaytimeTankPressure DaytimeMaxPressure
+    sgt r1 ExternalTemperature DaytimeMinTemperature
+    and r0 r0 r1
+    s DaytimePoweredVent On r0
+    slt r0 NighttimeTankPressure NighttimeMaxPressure
+    slt r1 ExternalTemperature NighttimeMaxTemperature
+    and r0 r0 r1
+    s NighttimePoweredVent On r0
+j start

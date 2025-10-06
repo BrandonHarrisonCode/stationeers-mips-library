@@ -1,0 +1,47 @@
+alias FreshCoolantVent d0
+alias StaleCoolantVent d1
+alias BatteryBatchReader d2
+alias GasSensor d3
+
+define BatteryType HASH("StructureBattery") # HASH | The battery type to read charge from
+define MaximumBatteryCharge 0.50 # 50% charge or below to run the stirling engines
+
+define FreshCoolantMaxOutputPressure 100 # kPa | Max pressure for the fresh coolant vent
+define StaleCoolantMaxTemperature 450 # K | Max temperature for the stale coolant vent
+
+define StirlingMaxInputPressure 10000 # kPa | Max pressure for the stirling engine input regulator. Warning! Pressure over 11 mPa will instantly destroy the engine!
+
+alias ExternalTemperature r15 
+alias RoomTemperature r14
+alias RoomPressure r13
+alias BatteryCharge r12
+alias DaytimeTankPressure r11
+alias NighttimeTankPressure r10
+
+init:
+s FreshCoolantVent Mode Vent.Outward
+s FreshCoolantVent PressureExternal FreshCoolantMaxOutputPressure
+s FreshCoolantVent On 1 # Flood room with coolant if setup fails
+s FreshCoolantVent Lock 1
+
+s StaleCoolantVent Mode Vent.Inward
+s StaleCoolantVent On 1 # Avoid overheating if setup fails
+s StaleCoolantVent Lock 1
+
+start:
+    yield
+    # Make sure the room is cool enough
+    l RoomTemperature GasSensor Temperature
+    l RoomPressure GasSensor Pressure
+    slt r0 RoomPressure FreshCoolantMaxOutputPressure
+    s FreshCoolantVent On r0
+    sgt r0 RoomTemperature StaleCoolantMaxTemperature
+    s StaleCoolantVent On r0
+
+    # Only operate stirling engines if the battery is low enough
+    lb BatteryCharge BatteryType Ratio Average
+    brdns BatteryBatchReader 2
+    l BatteryCharge BatteryBatchReader Setting # Read from batch reader if set, otherwise read from battery directly
+    sle r0 BatteryCharge MaximumBatteryCharge
+    sb HASH("StructureStirlingEngine") On r0
+j start
