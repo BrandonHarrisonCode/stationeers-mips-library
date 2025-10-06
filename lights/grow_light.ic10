@@ -1,17 +1,18 @@
-alias SetPower r15
-alias SecDarkPerDay r14
+define TicksLightPerDay 1500 # 12.5 min * 60 sec/min * 2 ticks/sec
+define TicksPerDay 2400 # 20 min * 60 sec/min * 2 ticks/sec
 
 define GrowLights HASH("StructureGrowLight")
+define TicksPerSecond 2
 
-# 12 minutes out of 20 minutes in a day
-define SecLightPerDay 720
-define SecondsPerDay 1200 # 20 min * 60 sec/min
-
-sub SecDarkPerDay SecondsPerDay SecLightPerDay
+alias SetPower r15
+alias CurrentTick r14
 
 start:
-	sb GrowLights On 1
-	sleep SecLightPerDay
-	sb GrowLights On 0
-	sleep SecDarkPerDay
+	l CurrentTick db Setting
+	mod CurrentTick CurrentTick TicksPerDay # Wrap around every day
+	slt SetPower CurrentTick TicksLightPerDay
+	sb GrowLights On SetPower
+	add CurrentTick CurrentTick 1
+	s db Setting CurrentTick
+	yield
 j start
