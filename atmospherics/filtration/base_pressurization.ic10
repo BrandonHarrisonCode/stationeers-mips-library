@@ -1,0 +1,49 @@
+alias ActiveVent d0
+alias Dial d1
+
+alias InputRatio r15
+alias InputTemperature r14
+alias InputPressure r13
+alias OutputPressure r12
+alias SafetyPressureExceeded r11
+alias DialSetting r10
+
+define MaxOutputPressure 100 # kPa | Max setting the dial can be set to
+define MaxInputTemperature 435 # K | Don't filter unless below this temperature
+define VentPressureInternal 500 # kPa | Pressure to maintain inside the vent
+
+init:
+s db On 1
+bdns ActiveVent initdial
+s ActiveVent Lock 1
+s ActiveVent Mode Vent.Inward
+s ActiveVent PressureInternal VentPressureInternal
+s ActiveVent On 0
+
+initdial:
+bdns Dial start
+s Dial Mode MaxOutputPressure
+
+start:
+	yield
+	l InputRatio db RatioCarbonDioxideInput
+	# l InputRatio db RatioNitrogenInput
+	# l InputRatio db RatioNitrousOxideInput
+	# l InputRatio db RatioOxygenInput
+	# l InputRatio db RatioPollutantInput
+	# l InputRatio db RatioVolatilesInput
+	# l InputRatio db RatioWaterInput
+	l InputPressure db PressureInput
+	l OutputPressure db PressureOutput
+	l InputTemperature db TemperatureInput
+	l DialSetting Dial Setting
+	snez InputRatio InputRatio
+	slt OutputPressure OutputPressure DialSetting
+	slt InputTemperature InputTemperature MaxInputTemperature
+	and r0 OutputPressure InputRatio
+	and r0 r0 InputTemperature
+	s db Mode r0
+
+	slt r0 InputPressure VentPressureInternal
+	s ActiveVent On r0
+j start
