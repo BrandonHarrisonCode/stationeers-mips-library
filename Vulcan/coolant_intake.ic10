@@ -3,36 +3,30 @@
 
 define MaxExternalTemp 425 # 425K = 151C
 define MaxInternalVolume 5000 # L
+define InternalTemperature 293 # 20C = 293K
 
-alias ActiveVent1 d0
-alias ActiveVent2 d1
-alias ActiveVent3 d2
-alias GasSensor d3
-alias PAT d4
+alias ExternalGasSensor d0
+alias InternalGasSensor d1
+alias PAT d2
+alias EvaporationChamber d3
 
 alias ExternalTemp r15
 alias TankVolume r14
 
 define Inward 1
 init:
-s ActiveVent1 Mode Vent.Inward
-bdns ActiveVent2 start
-
-s ActiveVent2 Mode Vent.Inward
-bdns ActiveVent3 start
-
-s ActiveVent3 Mode Vent.Inward
+sbn HASH("StructureActiveVent") HASH("Coolant Active Vent") Mode Vent.Inward
+s EvaporationChamber Setting 0
 start:
 	yield
-	l ExternalTemp GasSensor Temperature 
+	l ExternalTemp ExternalGasSensor Temperature 
 	l TankVolume PAT VolumeOfLiquid
 	slt r0 ExternalTemp MaxExternalTemp
 	slt r1 TankVolume MaxInternalVolume
 	and r0 r0 r1
+	sbn HASH("StructureActiveVent") HASH("Coolant Active Vent") On r0
 
-	s ActiveVent1 On r0
-	bdns ActiveVent2 start
-	s ActiveVent2 On r0
-	bdns ActiveVent3 start
-	s ActiveVent3 On r0
+	l r0 InternalGasSensor Temperature 
+	sgt r0 r0 InternalTemperature
+	s EvaporationChamber On r0
 j start
