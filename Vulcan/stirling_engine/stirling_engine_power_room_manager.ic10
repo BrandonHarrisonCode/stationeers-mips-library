@@ -2,14 +2,16 @@ alias FreshCoolantVent d0
 alias StaleCoolantVent d1
 alias BatteryBatchReader d2
 alias GasSensor d3
+alias NighttimeTank d4
 
 define BatteryType HASH("StructureBattery") # HASH | The battery type to read charge from
-define MaximumBatteryCharge 0.50 # 50% charge or below to run the stirling engines
+define WattsGeneratedMaximum 10000 # W | Max watts generated for the watts generated meter
 
-define FreshCoolantMaxOutputPressure 100 # kPa | Max pressure for the fresh coolant vent
-define StaleCoolantMaxTemperature 450 # K | Max temperature for the stale coolant vent
+define CoolantSafetyPressure 100 # kPa | Safety pressure for the fresh coolant vent
+define CoolantSafetyTemperature 450 # K | Safety temperature for the stale coolant vent
 
-define StirlingMaxInputPressure 10000 # kPa | Max pressure for the stirling engine input regulator. Warning! Pressure over 11 mPa will instantly destroy the engine!
+define RoomPressureMax 180 # kPa | Max pressure for the room pressure setpoint dial
+define RoomTemperatureMax 500 # K | Max temperature for the room temperature setpoint dial
 
 alias ExternalTemperature r15 
 alias RoomTemperature r14
@@ -18,30 +20,98 @@ alias BatteryCharge r12
 alias DaytimeTankPressure r11
 alias NighttimeTankPressure r10
 
+alias RoomTemperatureSetpoint r9
+alias RoomPressureSetpoint r8
+alias BatteryThresholdSetpoint r7
+
+alias CoolantInputPower r6
+alias CoolantUptakePower r5
+alias SEPower r4
+
 init:
 s FreshCoolantVent Mode Vent.Outward
-s FreshCoolantVent PressureExternal FreshCoolantMaxOutputPressure
-s FreshCoolantVent On 1 # Flood room with coolant if setup fails
+s FreshCoolantVent PressureExternal RoomPressureMax
 s FreshCoolantVent Lock 1
 
 s StaleCoolantVent Mode Vent.Inward
-s StaleCoolantVent On 1 # Avoid overheating if setup fails
 s StaleCoolantVent Lock 1
 
+## Main control board
+# Room Pressure and Temperature
+s $CA15 Mode DisplayMode.Pa
+s $CA13 Mode RoomPressureMax
+
+s $CA16 Mode DisplayMode.Kelvin
+s $CA14 Mode RoomTemperatureMax
+
+# Battery threshold
+s $CC2D On 1
+
+# Watts generated meter
+s $CC53 Color Color.White
+s $CC53 Mode WattsGeneratedMaximum
 start:
     yield
-    # Make sure the room is cool enough
-    l RoomTemperature GasSensor Temperature
+    roomControls:
     l RoomPressure GasSensor Pressure
-    slt r0 RoomPressure FreshCoolantMaxOutputPressure
-    s FreshCoolantVent On r0
-    sgt r0 RoomTemperature StaleCoolantMaxTemperature
-    s StaleCoolantVent On r0
+    s $CA15 Setting RoomPressure # Update room pressure display
+    l RoomTemperature GasSensor Temperature
+    s $CA16 Setting RoomTemperature # Update room temperature display
+
+    l RoomPressureSetpoint $CA13 Setting # Room pressure dial
+    l RoomTemperatureSetpoint $CA14 Setting # Room temperature dial
+    l r1 NighttimeTank Temperature
+    add r1 r1 10 # Add some margin to avoid asymptotic cooling
+    max RoomTemperatureSetpoint RoomTemperatureSetpoint r1 # Don't allow setting below coolant tank temperature
+
+    slt CoolantInputPower RoomPressure RoomPressureSetpoint
+    sgt CoolantUptakePower RoomTemperature RoomTemperatureSetpoint
+
+    batteryControls:
+    l BatteryThresholdSetpoint $CC12 Setting # Battery threshold dial
+    l r0 db Setting # Load last saved setting
+    sne r2 r0 BatteryThresholdSetpoint # Check if setting has changed
+    select r3 r2 Color.Green Color.Gray # Change button color if setting has changed
+    s $CC11 Color r3 # Battery threshold confirm button
+
+    l r1 $CC11 Activate # Battery threshold confirm button
+    select r0 r1 BatteryThresholdSetpoint r0 # If button is pressed, save new setting
+    s db Setting r0
 
     # Only operate stirling engines if the battery is low enough
     lb BatteryCharge BatteryType Ratio Average
     brdns BatteryBatchReader 2
     l BatteryCharge BatteryBatchReader Setting # Read from batch reader if set, otherwise read from battery directly
-    sle r0 BatteryCharge MaximumBatteryCharge
-    sb HASH("StructureStirlingEngine") On r0
+    s $CC2D Setting BatteryCharge # Update battery percentage diode
+    sle SEPower BatteryCharge r0
+
+    select r0 SEPower Color.Red Color.Green
+    s $CC2D Color r0
+
+    WattsGeneratedMeter:
+    lb r0 HASH("StructureStirlingEngine") PowerGeneration Sum
+    s $CC53 Setting r0 # Update watts generated meter
+
+    checkShutdown:
+    l r0 $CC0A Activate # Emergency shutoff button
+    l r1 $CC0B Setting # Main breaker
+    or r2 r0 r1
+    s $CC0B Open r2 # Open breaker if emergency button is pressed
+    bnez r1 shutdown # If breaker is open, initiate shutdown
+
+    write:
+    s FreshCoolantVent On CoolantInputPower
+    s StaleCoolantVent On CoolantUptakePower
+    sb HASH("StructureStirlingEngine") On SEPower
+j start
+
+shutdown:
+s FreshCoolantVent PressureExternal CoolantSafetyPressure
+s FreshCoolantVent On 1 # Flood room with coolant if setup fails
+
+l RoomTemperature GasSensor Temperature
+sgt r0 RoomTemperature CoolantSafetyTemperature
+s StaleCoolantVent On r0 # Avoid overheating if setup fails
+
+sb HASH("StructureStirlingEngine") On 0
 j start
