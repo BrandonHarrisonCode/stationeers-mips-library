@@ -12,7 +12,7 @@ alias ResetNeeded r8
 
 define MaxOutputPressure 8000 # kPa | Don't filter if the output is above this pressure
 define MaxInputTemperature 425 # K | Don't filter unless below this temperature
-define MinRatio 0.25 # % | Don't filter unless greater than this percent (higher tends to be more efficient)
+define MinRatio 0.0 # % | Don't filter unless greater than this percent (higher tends to be more efficient)
 define InputSafetyPressure 30000 # kPa | Try to filter if input is over this pressure (to help prevent overpressure events)
 
 init:
@@ -25,9 +25,9 @@ start:
 	# l InputRatio db RatioCarbonDioxideInput
 	# l InputRatio db RatioNitrogenInput
 	# l InputRatio db RatioNitrousOxideInput
-	l InputRatio db RatioOxygenInput
+	# l InputRatio db RatioOxygenInput
 	# l InputRatio db RatioPollutantInput
-	# l InputRatio db RatioVolatilesInput
+	l InputRatio db RatioVolatilesInput
 	# l InputRatio db RatioWaterInput
 	sgt InputRatio InputRatio MinRatio
 	l InputPressure db PressureInput
@@ -36,22 +36,23 @@ start:
 	l InputTemperature db TemperatureInput
 	slt InputTemperature InputTemperature MaxInputTemperature
 	sgt SafetyPressureExceeded InputPressure InputSafetyPressure
-	#sle TooColdTemperature InputTemperature 228 # K | Carbon Dioxide
+	# sle TooColdTemperature InputTemperature 228 # K | Carbon Dioxide
 	# and TooColdTemperature TooColdTemperature InputRatio
 	# sle TooColdTemperature InputTemperature 50 # K | Nitrogen
 	# and TooColdTemperature TooColdTemperature InputRatio
-	#sle TooColdTemperature InputTemperature 262 # K | Nitrous Oxide
+	# sle TooColdTemperature InputTemperature 262 # K | Nitrous Oxide
 	# and TooColdTemperature TooColdTemperature InputRatio
-	sle TooColdTemperature InputTemperature 66.4 # K | Oxygen
-	and TooColdTemperature TooColdTemperature InputRatio
+	# sle TooColdTemperature InputTemperature 66.4 # K | Oxygen
+	# and TooColdTemperature TooColdTemperature InputRatio
 	# sle TooColdTemperature InputTemperature 183 # K | Pollutant
 	# and TooColdTemperature TooColdTemperature InputRatio
-	# sle TooColdTemperature InputTemperature 91.6 # K | Volatiles
-	# and TooColdTemperature TooColdTemperature InputRatio
+	sle TooColdTemperature InputTemperature 91.6 # K | Volatiles
+	and TooColdTemperature TooColdTemperature InputRatio
 	and r0 OutputPressure InputRatio
 	or r0 r0 TooColdTemperature
 	and r0 r0 InputTemperature
 	or r0 r0 SafetyPressureExceeded
+	and r0 r0 OutputPressure
 	s db Mode r0
 	
 	filterCheck:
@@ -72,9 +73,9 @@ start:
 	# s WarningLight Color Color.Gray
 	# s WarningLight Color Color.Black
 	# s WarningLight Color Color.Green
-	s WarningLight Color Color.White 
+	# s WarningLight Color Color.White 
 	# s WarningLight Color Color.Yellow 
-	# s WarningLight Color Color.Red 
+	s WarningLight Color Color.Red 
 	# s WarningLight Color Color.Blue 
 	s WarningLight On r0
 	
