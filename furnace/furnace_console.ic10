@@ -1,0 +1,115 @@
+# fuel pump $FF0C
+# fuel volume pump $EFAD
+# waste pump $FF0D
+# waste volume pump $EFAF
+# coolant pump $FF0B
+# coolant volume pump $EFA8
+# pressure display $FED1
+# temperature display $FED5
+# smelting light $10021
+# fuel high $FF8A
+# fuel low $FF86
+# fuel gauge $FF50
+# waste high $FF8C
+# waste low $FF8B
+# waste gauge $FF54
+# coolant high $FF91
+# coolant low $FF90
+# coolant gauge $FF55
+# fuel mixer target dial $101ED
+# power switch $106E2
+# coolant intake $103F9
+# coolant intake dial $1078C
+# coolant temp dial $1078D
+# gas sensor $10747
+
+alias Furnace d0
+alias FuelPAT d1
+alias WastePAT d2
+alias CoolantPAT d3
+alias FuelMixerICHousing d4 
+
+define FuelLow 3000 # kPa | Fuel low pressure threshold
+define FuelHigh 50000 # kPa | Fuel high pressure threshold
+define WasteLow 3000 # kPa | Waste low pressure threshold
+define WasteHigh 50000 # kPa | Waste high pressure threshold
+define CoolantLow 3000 # kPa | Coolant low pressure threshold
+define CoolantHigh 40000 # kPa | Coolant high pressure threshold
+define MaxPressure 60000 # kPa | Maximum pressure for gauges
+
+init:
+s $FED1 On 1
+s $FED5 On 1
+
+s $FF0C Color Color.Orange
+s $FF0D Color Color.Brown
+s $FF0B Color Color.Blue
+s $FED1 Mode DisplayMode.Pa
+s $FED5 Mode DisplayMode.Kelvin
+s $10021 Color Color.Red
+s $FF8A Color Color.Red
+s $FF8A Mode 1
+s $FF86 Color Color.Blue
+s $FF50 Color Color.Orange
+s $FF8C Color Color.Red
+s $FF8C Mode 1
+s $FF8B Color Color.Blue
+s $FF54 Color Color.Brown
+s $FF91 Color Color.Red
+s $FF91 Mode 1
+s $FF90 Color Color.Blue
+s $FF55 Color Color.Blue
+s $106E2 Color Color.Red
+s $103F9 Mode Vent.Inward
+
+start:
+yield
+l r0 Furnace Pressure # Pressure display
+mul r0 r0 1000 # kPa to Pa
+s $FED1 Setting r0
+l r0 Furnace Temperature # Temperature display
+s $FED5 Setting r0
+l r0 Furnace RecipeHash # Smelting light 
+s $10021 On r0
+l r0 $106E2 On  # Power switch
+s Furnace On r0
+l r0 $EFAD On # Fuel volume pump
+s $FF0C On r0
+l r0 $EFAF On # Waste volume pump
+s $FF0D On r0
+l r0 $EFA8 On # Coolant volume pump
+s $FF0B On r0
+l r0 FuelPAT Pressure # Fuel gauge
+div r1 r0 MaxPressure
+s $FF50 Setting r1
+slt r1 r0 FuelLow # Fuel low light
+s $FF86 On r1
+sgt r1 r0 FuelHigh # Fuel high light
+s $FF8A On r1
+l r0 WastePAT Pressure # Waste gauge
+div r1 r0 MaxPressure
+s $FF54 Setting r1
+slt r1 r0 WasteLow # Waste low light
+s $FF8B On r1
+sgt r1 r0 WasteHigh # Waste high light
+s $FF8C On r1
+l r0 CoolantPAT Pressure # Coolant gauge
+div r1 r0 MaxPressure
+s $FF55 Setting r1
+slt r1 r0 CoolantLow # Coolant low light
+s $FF90 On r1
+sgt r1 r0 CoolantHigh # Coolant high light
+s $FF91 On r1
+# Coolant intake
+l r1 $1078C Setting
+mul r1 r1 1000 # MPa to kPa
+slt r0 r0 r1
+l r1 $10747 Temperature
+l r2 $1078D Setting
+slt r1 r1 r2
+and r0 r0 r1
+s $103F9 On r0
+l r0 $101ED Setting # Fuel mixer target dial
+mul r0 r0 1000 # MPa to Pa
+s FuelMixerICHousing Setting r0
+j start
