@@ -4,114 +4,125 @@ alias PATCoolant d2
 alias VPCoolant d3
 alias PATWaste d4
 alias VPWaste d5
-define FurnaceVolume 1560 # The wiki says it's supposed to be 1000L, but here it's 333L?
-define PumpMax 100
-define FuelScale 3  #Bomb Factor (the amount the fuel expands after combustion)
-define AdvanceFurnace HASH("StructureAdvancedFurnace")
+define V 1000
+define PumpMax 10 #input pipe volume!
+define FuelScale 3 #When running direct fuel input: big number => slow; small => fast
+define AdvanceFurnace 545937711
 alias IsFuel r2
 alias MainPointer r3
 alias SubPointer r4
-alias TempSP r5 # Setpoint?
-alias PresSP r6 # Setpoint?
-alias TempHeat r7 # Temperature of the Heat pipe
-alias TempCoolant r8 # Temperature of the Coolant pipe
-alias TempWaste r9 # Temperature of the Waste pipe
+alias TempSP r5
+alias PresSP r6
+alias th r7
+alias tc r8
+alias tw r9
 alias TempCur r10
 alias PresCur r11
-alias VolumeHeatNeeded r12
-alias VolumeCoolantNeeded r13
-alias TotalVolumeNeeded r14
-alias VolumeWasteNeeded r15
+alias vh r12
+alias vc r13
+alias vo r14
+alias vw r15
 Start:
-	yield
-	l r0 db Setting # What is the setting supposed to be here? Temperature?
-	trunc PresSP r0
-	sub r0 r0 PresSP # Get only the fractional part
-	mul TempSP r0 10000 # Convert to 10000x fractional
-	l r0 PATHeat RatioOxygen
-	l r1 PATHeat RatioNitrousOxide
-	sgt TempHeat r1 r0 # Ifwitch main and sub pointer will not combust if it's less than 10% of the total mixture
-	select TempHeat TempHeat 6000 2500 # If using nitrous fuel, use 6000, otherwise use 2500
-	l r1 PATHeat Temperature
-	select TempHeat IsFuel TempHeat r1 # If using fuel, use the combustion temperature. Otherwise, use the temperature of the pipe
-	l TempCoolant PATCoolant Temperature
-	l TempWaste PATWaste Temperature
-	lb TempCur AdvanceFurnace Temperature Average
-	select TempCur TempCur TempCur 1 # If no temperature is detected in the furnace, set it to 1K
-	lb PresCur AdvanceFurnace Pressure Average
-	select PresCur PresCur PresCur 1 # If no pressure is detected in the furnace, set it to 1Kpa
-	sub TotalVolumeNeeded PresSP PresCur # How far off are we from the setpoint?
-	mul TotalVolumeNeeded TotalVolumeNeeded FurnaceVolume # Multiply by 333
-	max TotalVolumeNeeded TotalVolumeNeeded 0 # If we're above the pressure setpoint, don't add more gas
-	move MainPointer 8 # Use the CoolantTemp in InputTempCalc
-	jal InputTempCalc
-	max VolumeCoolantNeeded r0 0 # Set the floor to 0
-	move MainPointer 7 # Use the HeatTemp in InputTempCalc
-	jal InputTempCalc
-	max VolumeHeatNeeded r0 0 # Set the floor to 0
-	move SubPointer 9 # Sets the subpointer to the Temperature of the Waste pipe
-	jal InputPressureCalc # Use Heat and Waste
-	blez r0 CoolantCalc #ToA # Use coolant and waste for next calculation if WasteTemp is larger than setpoint and HeatTemp is greater than WasteTemp (or vice versa)
-	max VolumeHeatNeeded r0 VolumeHeatNeeded # If here, then the waste pipe can help us, or the heat pipe can help us. Pick the one that helps the most
-	jal Flip # Use Waste and Heat
-	max VolumeWasteNeeded r0 0
-	j voCalc #ToB
-	CoolantCalc:
-	move MainPointer 8 #A
-	jal InputPressureCalc # Use Coolant and Waste
-	max VolumeCoolantNeeded r0 VolumeCoolantNeeded
-	jal Flip # Use Waste and Coolant
-	max VolumeWasteNeeded r0 0
-	voCalc:
-	add TotalVolumeNeeded VolumeCoolantNeeded VolumeHeatNeeded #B
-	add TotalVolumeNeeded TotalVolumeNeeded VolumeWasteNeeded
-	mul r0 PresCur FurnaceVolume
-	add r0 r0 TotalVolumeNeeded # Find the total end volume of the system
-	sub r1 PresCur PresSP
-	add r1 r1 TotalVolumeNeeded
-	mul r1 r1 FurnaceVolume
-	div TotalVolumeNeeded r1 r0
-	l r0 PATHeat Pressure
-	select r1 IsFuel FuelScale 1 # Multiply the final pressure calculation by 3 (for combustion) if using fuel
-	mul r0 r0 r1
-	div VolumeHeatNeeded VolumeHeatNeeded r0
-	l r0 PATCoolant Pressure
-	div VolumeCoolantNeeded VolumeCoolantNeeded r0
-	l r0 PATWaste Pressure
-	div VolumeWasteNeeded VolumeWasteNeeded r0
-	sb AdvanceFurnace SettingOutput TotalVolumeNeeded # Suck back in waste gas to meet required pressure
-	sb AdvanceFurnace SettingInput 100 # Always take in whatever gas is available since we control the input mix with other pumps
-	div r0 PumpMax r1
-	min VolumeHeatNeeded VolumeHeatNeeded r0
-	min VolumeCoolantNeeded VolumeCoolantNeeded r0
-	min VolumeWasteNeeded VolumeWasteNeeded r0
-	s VPHeat Setting VolumeHeatNeeded
-	s VPCoolant Setting VolumeCoolantNeeded
-	s VPWaste Setting VolumeWasteNeeded
-	lb r0 AdvanceFurnace On Minimum # See if any connected furnace is on
-	s VPHeat On r0
-	s VPCoolant On r0
-	s VPWaste On r0
-	sgt r0 VolumeHeatNeeded 0.1
-	lb r1 AdvanceFurnace Combustion Minimum # See if any connected furnace is combusting
-	and r0 r0 IsFuel
-	sgt r0 r0 r1
-	sb AdvanceFurnace Activate r0 # Ignite the furnace if we are using fuel and not already combusting
+yield
+l r0 db Setting
+trunc PresSP r0
+sub r0 r0 PresSP
+mul TempSP r0 10000
+l r0 PATHeat RatioOxygen
+l r1 PATHeat RatioNitrousOxide
+sgt th r1 r0
+max r0 r0 r1
+l r1 PATHeat RatioVolatiles
+min r0 r0 r1
+sgt IsFuel r0 0.1
+select th th 6000 3000
+l r1 PATHeat Temperature
+select th IsFuel th r1
+l tc PATCoolant Temperature
+l tw PATWaste Temperature
+lb TempCur AdvanceFurnace Temperature Average
+select TempCur TempCur TempCur 1
+lb PresCur AdvanceFurnace Pressure Average
+select PresCur PresCur PresCur 1
+move MainPointer 8
+jal InputTempCalc
+max vc r0 0
+move MainPointer 7
+jal InputTempCalc
+max vh r0 0
+sub vo PresSP PresCur #vo = pv_s
+mul vo vo V
+sub vo vo vc
+sub vo vo vh
+max vo vo 0
+move SubPointer 9
+jal InputPressureCalc
+blez r0 CoolantCalc #ToA
+max vh r0 vh
+jal Flip
+max vw r0 0
+j voCalc #ToB
+CoolantCalc:
+move MainPointer 8 #A
+jal InputPressureCalc
+max vc r0 vc
+jal Flip
+max vw r0 0
+voCalc:
+add vo vc vh #B
+add vo vo vw
+mul r0 PresCur V
+add r0 r0 vo
+sub r1 PresCur PresSP
+mul r1 r1 V
+add r1 r1 vo
+mul r1 r1 V
+div vo r1 r0
+l r0 PATHeat Pressure
+select r1 IsFuel FuelScale 1
+mul r0 r0 r1
+div vh vh r0
+l r0 PATCoolant Pressure
+div vc vc r0
+l r0 PATWaste Pressure
+div vw vw r0
+sb AdvanceFurnace SettingOutput vo
+sb AdvanceFurnace SettingInput PumpMax
+div r0 PumpMax r1
+min vh vh r0
+min vc vc PumpMax
+min vw vw PumpMax
+s VPHeat Setting vh
+s VPCoolant Setting vc
+s VPWaste Setting vw
+lb r0 AdvanceFurnace On Minimum
+s VPHeat On r0
+s VPCoolant On r0
+s VPWaste On r0
+sgt r0 vh 0.1
+lb r1 AdvanceFurnace Combustion Minimum
+and r0 r0 IsFuel
+sgt r0 r0 r1
+sb AdvanceFurnace Activate r0
 j Start
-InputTempCalc: # Finds the amount of kilojoules needed to heat the furnace using the given pipe
-	sub r0 TempSP rr3 # Take the difference of the pipe temperature and the setpoint
-	mul r0 r0 TempCur # Multiply the difference by the current furnace temperature
-	sub r1 Tfirst value (difference between pipes referenced by the main and sub pointers) by the second value
-	j raThe result is negative when the furnace is not the right temp but this pipe cannot fix it, positive otherwise
-	Flip: # Switch main and sub pointers, then does input pressure calc
-		move r0 MainPointer
-		move MainPointer SubPointer
-		move SubPointer r0 # Notice how this doesn't return!
-		InputPressureCalc:
-			sub r0 rr3 rr4 # Take the difference of the pipes referenced by the main and sub pointers
-			mul r0 r0 TempSP # Multiply by the setpoint
-			sub r1 TempSP rr4 # Take the difference of the setpoint and the pipe referenced by the sub pointer
-			mul r1 r1 rr3 # Multiply by the pipe referenced by the main pointer
-			mul r1 r1 TotalVolumeNeeded # Multiply by the amount of additional pressure needed
-			div r0 r1 r0 # Divide the first value (difference between pipes referenced by the main and sub pointers) by the second value
-j ra # Returns the number of liters needed to reach the setpoint
+InputTempCalc: #r3
+sub r0 TempSP rr3
+mul r0 r0 TempCur
+sub r1 TempCur TempSP
+mul r1 r1 V
+mul r1 r1 PresCur
+mul r1 r1 rr3
+div r0 r1 r0
+j ra
+Flip:
+move r0 MainPointer
+move MainPointer SubPointer
+move SubPointer r0
+InputPressureCalc: #r3 = main
+sub r0 rr3 rr4
+mul r0 r0 TempSP
+sub r1 TempSP rr4
+mul r1 r1 rr3
+mul r1 r1 vo
+div r0 r1 r0
+j ra
