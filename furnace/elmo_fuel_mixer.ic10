@@ -1,0 +1,72 @@
+alias PATInput1 d0
+alias PATInput2 d1
+alias PATOutput d2
+alias Mixer d3
+
+# define TargetPressure 5000
+define InputMinPressure 500 #NOT Zero!!!
+
+alias HydInput r5
+alias OxidizerInput r6
+alias MixRatio r7
+alias IsNos r8
+alias Temp1 r9
+alias Temp2 r10
+alias OutputTempCalc r11
+alias CombustTemp r12
+s Mixer Lock 1
+Start:
+yield
+l r0 PATInput1 Pressure
+l r1 PATInput2 Pressure
+min r0 r1 r0
+brgt r0 InputMinPressure 3
+s Mixer On 0
+j Start
+
+l r0 PATInput1 RatioVolatiles
+l r1 PATInput2 RatioVolatiles
+sgt HydInput r1 r0
+seqz OxidizerInput HydInput
+
+l r0 dr6 RatioOxygen
+l r1 dr6 RatioNitrousOxide
+sgt IsNos r1 r0
+div r1 2 3
+select MixRatio IsNos 0.5 r1
+sub MixRatio HydInput MixRatio
+abs MixRatio MixRatio
+#s db Setting MixRatio
+
+l Temp1 PATInput1 Temperature
+l Temp2 PATInput2 Temperature
+sub r0 1 MixRatio
+mul r0 r0 Temp2
+mul r1 Temp1 MixRatio
+add r0 r0 r1
+div MixRatio r1 r0
+
+mul r0 Temp1 MixRatio
+mul r1 Temp2 MixRatio
+sub r0 r1 r0
+add r0 r0 Temp1
+mul r1 Temp1 Temp2
+div OutputTempCalc r1 r0
+# s db Setting OutputTempCalc
+
+mul r0 MixRatio 100
+s Mixer Setting r0
+
+select CombustTemp IsNos 320 570
+sgt r1 OutputTempCalc CombustTemp
+l r0 PATOutput Temperature
+sub r0 r0 10
+sgt r0 r0 CombustTemp
+sle r0 r1 r0
+
+l r1 PATOutput Pressure
+l r2 db Setting
+slt r1 r1 r2
+and r0 r0 r1
+s Mixer On r0
+j Start
